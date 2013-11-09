@@ -1,21 +1,17 @@
-SOURCES = $(wildcard sources/*.md)
-GRAPHICS = $(wildcard images/*.svg)
 OPTIONS = --number-sections --table-of-contents --include-in-header=templates/header.tex --template=templates/template.tex
 
 .PHONY: all clean
 
-all: outputs/document.pdf
+all: document.pdf
 
 clean:
-	@rm -r -f outputs
+	@rm document.pdf
+	@rm images/*.pdf
 
-outputs/document.pdf: $(SOURCES) | $(GRAPHICS:images/%.svg=outputs/%.eps) outputs
+document.pdf: sources/*.md $(patsubst %.svg, %.pdf, $(wildcard images/*.svg))
 	@echo $@
-	@pandoc $(OPTIONS) -o $@ $^
+	@pandoc $(OPTIONS) -o $@ sources/*.md
 
-outputs/%.eps: images/%.svg | outputs
+images/%.pdf: images/%.svg
 	@echo $@
-	@inkscape $< --export-eps=$@
-
-outputs:
-	@mkdir outputs
+	@inkscape $< --export-pdf=$@

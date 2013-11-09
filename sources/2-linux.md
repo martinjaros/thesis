@@ -127,7 +127,7 @@ Complete kernel device model is exported as `sysfs` file-system and typically mo
 [`read()`][read], [`write()`][write]    stream           Raw data buffers, byte streams
 [`mmap()`][mmap]                        block            High throughput data transfers
 
-Table: Standard C library functions for working with device file descriptors
+Table: Available functions for working with device file descriptors
 
 For example let's assume a generic peripheral device connected by the I^2^C bus.
 First, to tell kernel there is such a device, the `sysfs` file-system may be used

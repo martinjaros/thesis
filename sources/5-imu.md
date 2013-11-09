@@ -1,3 +1,33 @@
-## Sensor I/O subsystem
+## Inertial measurement subsystem
 
+> Industrial I/O module and drivers, DCM algorithm
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
 
