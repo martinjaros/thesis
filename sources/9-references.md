@@ -1,12 +1,20 @@
 # References {.unnumbered}
 
-> References
-\
-\
-\
-\
-\
-\
+\[1\] BIMBER, O.; RASKAR, R. Spatial augmented reality: merging real and virtual worlds. Wellesley: A K Peters, 2005, 369 p. ISBN 15-688-1230-2.
+
+\[2\] JAZAR, Reza N. Theory of applied robotics: kinematics, dynamics, and control. 2nd ed. New York: Springer, 2010, 883 p. ISBN 978-1-4419-1749-2.
+
+\[3\] KENNEDY, Melita. Understanding map projections. Redlands: ESRI, 2000, 110 p. ISBN 15-894-8003-1. 
+
+\[4\] Texas Instruments. OMAP 4460 Multimedia Device \[online\]. 2012 - \[cit. 8. Nov 2012\]. Available: <http://www.ti.com/product/omap4460>.
+
+\[5\] InvenSense. MPU-9150 Nine-Axis MEMS MotionTracking™ Device \[online\]. 2013 - \[cit. 10. Nov 2013\]. Available: <http://www.invensense.com/mems/gyro/mpu9150.html>.
+
+\[6\] Consultative Committee on International Radio. ITU-R Recommendation BT.601 \[online\]. 2011 - \[cit. 10. Nov 2013\]. Available: <http://www.itu.int/rec/R-REC-BT.601/en>.
+
+\[7\] Khronos Group. OpenGL ES 2.X - for Programmable Hardware \[online\]. 2013 - \[cit. 10. Nov 2013\]. Available: <http://www.khronos.org/opengles/2_X/>.
+
+\[8\] National Marine Electronics Association. NMEA 0183 \[online\]. 2008 - \[cit. 10. Nov 2013\]. Available: <http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp>.
 
 
 [v4l2capture]:     images/v4l2capture.pdf
@@ -51,4 +59,19 @@
 
 [^bt601]: ITU-R Recommendation BT.601-7\
 <http://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.601-7-201103-I!!PDF-E.pdf>
+
+[^v4l2format]: V4L2 image format definitions\
+<http://linuxtv.org/downloads/v4l-dvb-apis/pixfmt.html>
+
+[^v4l2loopback]: V4L2 loopback device module\
+<https://github.com/umlaeute/v4l2loopback>
+
+[^gstreamer]: GStreamer home page\
+<http://gstreamer.freedesktop.org/>
+
+[^tiomap]: TI OMAP trunk PPA\
+<https://launchpad.net/~tiomap-dev/+archive/omap-trunk>
+
+[^libjpeg]: libjpeg-turbo library\
+<http://www.libjpeg-turbo.org/>
 

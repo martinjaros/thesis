@@ -31,9 +31,7 @@ time by the kernel. They may communicate with outside environment by several mea
 Each process is ran with several arguments in a specific environment with three default file descriptors.
 For example running
 
-~~~{.bash}
-VARIABLE=value ./executable argument1 argument2 <input 1>output 2>error
-~~~
+`VARIABLE=value ./executable argument1 argument2 <input 1>output 2>error`{.bash}
 
 will execute *executable* with environment variable *VARIABLE* of value *value* with two arguments *argument1* and *argument2*.
 Standard input will be read from file *input* while regular output will be written to file *output* and error output to file *error*.
@@ -55,12 +53,6 @@ to this or any other *mutex* in order to avoid dead-locking.
 ~~~{.c .numberLines}
 #include <stdio.h>
 #include <pthread.h>
-
-/*
- * In this example two threads are created, they access shared resources (stdin and stdout).
- * Mutex is used to restrict this access and avoid memory corruption,
- * so only one thread may access the shared resource at one time.
- */
 
 void *worker1(void *arg)
 {
@@ -132,35 +124,27 @@ Table: Available functions for working with device file descriptors
 For example let's assume a generic peripheral device connected by the I^2^C bus.
 First, to tell kernel there is such a device, the `sysfs` file-system may be used
 
-~~~{.bash}
-echo $DEVICE_NAME $DEVICE_ADDRESS > /sys/bus/i2c/devices/i2c-1/new_device
-~~~
+`echo $DEVICE_NAME $DEVICE_ADDRESS > /sys/bus/i2c/devices/i2c-1/new_device`{.bash}
 
 This should create a special file in `/dev`, which should be opened by [`open()`][open] to get a file descriptor for this device.
 Device driver may export some *ioctl* requests, each request is defined by a number and a structure passed between the application and the kernel.
 Driver should define requests for controlling the device, maybe accessing its internal registers and configuring a data stream.
 Each request is called by
 
-~~~{.c}
-ioctl(fd, REQNUM, &data);
-~~~
+`ioctl(fd, REQNUM, &data);`{.c}
 
 where *fd* is the file descriptor, *REQNUM* is the request number defined in the driver header and *data* is the structure passed to the kernel.
 This request will be synchronously processed by the kernel and the result stored in the *data* structure.
 Let's assume this devices has been configured to stream an integer value every second to the application.
 To synchronize with this timing application may use
 
-~~~{.c}
-struct pollfd fds = {fd, POLLIN};
-poll(&fds, 1, -1);
-~~~
+`struct pollfd fds = {fd, POLLIN};`{.c} \
+`poll(&fds, 1, -1);`{.c}
 
 which will block infinitely until there is a value ready to be read. To actually read it,
 
-~~~{.c}
-int buffer[1];
-ssize_t num = read(fd, buffer, sizeof(buffer));
-~~~
+`int buffer[1];`{.c} \
+`ssize_t num = read(fd, buffer, sizeof(buffer));`{.c}
 
 will copy this value to the buffer. Copying causes performance issues if there are very large amounts of data.
 To access this data directly without copying them, application has to map physical memory used by the driver.

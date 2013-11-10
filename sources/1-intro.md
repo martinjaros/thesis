@@ -1,22 +1,3 @@
-# Preface {.unnumbered}
-
-> Introduction
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-
 # Augmented reality
 
 ## Design goals
