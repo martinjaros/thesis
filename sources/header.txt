@@ -1,0 +1,4 @@
+% Augmented reality navigation
+% Martin Jaroš
+% Dec. 2013
+

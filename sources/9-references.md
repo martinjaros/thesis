@@ -17,8 +17,6 @@
 \[8\] National Marine Electronics Association. NMEA 0183 \[online\]. 2008 - \[cit. 10. Nov 2013\]. Available: <http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp>.
 
 
-[v4l2capture]:     images/v4l2capture.pdf
-
 [freertos]:        http://www.freertos.org
 [linux]:           http://www.elinux.org
 [vxworks]:         http://www.windriver.com/products/vxworks
