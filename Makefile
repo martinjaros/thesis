@@ -1,4 +1,7 @@
-OPTIONS = --number-sections --table-of-contents --include-in-header=templates/header.tex --template=templates/template.tex
+OPTIONS = --number-sections --table-of-contents
+TEMPLATES = --template=templates/template.tex
+TEMPLATES += --include-in-header=templates/header.tex
+TEMPLATES += --include-before-body=templates/body.tex
 
 .PHONY: all clean
 
@@ -8,9 +11,9 @@ clean:
 	@rm document.pdf
 	@rm images/*.pdf
 
-document.pdf: sources/*.md $(patsubst %.svg, %.pdf, $(wildcard images/*.svg))
+document.pdf: sources/* templates/* samples/* $(patsubst %.svg, %.pdf, $(wildcard images/*.svg))
 	@echo $@
-	@pandoc $(OPTIONS) -o $@ sources/*.md
+	@pandoc $(OPTIONS) $(TEMPLATES) -o $@ sources/*.md
 
 images/%.pdf: images/%.svg
 	@echo $@

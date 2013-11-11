@@ -70,8 +70,6 @@ $if(graphics)$
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
 \else\Gin@nat@width\fi}
 \makeatother
-\let\Oldincludegraphics\includegraphics
-\renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=\maxwidth]{#1}}
 $endif$
 \ifxetex
   \usepackage[setpagesize=false, % page size defined by xetex
@@ -140,6 +138,11 @@ $if(toc)$
 \hypersetup{linkcolor=black}
 \setcounter{tocdepth}{$toc-depth$}
 \tableofcontents
+\thispagestyle{empty}
+\listoffigures
+\thispagestyle{empty}
+\listoftables
+\thispagestyle{empty}
 }
 $endif$
 $body$
