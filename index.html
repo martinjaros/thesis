@@ -45,7 +45,10 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li><a href="#linux-kernel"><span class="toc-section-number">2.1</span> Linux kernel</a></li>
 <li><a href="#video-subsystem"><span class="toc-section-number">2.2</span> Video subsystem</a></li>
 <li><a href="#graphics-subsystem"><span class="toc-section-number">2.3</span> Graphics subsystem</a></li>
-<li><a href="#inertial-measurement-subsystem"><span class="toc-section-number">2.4</span> Inertial measurement subsystem</a></li>
+<li><a href="#inertial-measurement-subsystem"><span class="toc-section-number">2.4</span> Inertial measurement subsystem</a><ul>
+<li><a href="#industrial-io-module"><span class="toc-section-number">2.4.1</span> Industrial I/O module</a></li>
+<li><a href="#dcm-algorithm"><span class="toc-section-number">2.4.2</span> DCM algorithm</a></li>
+</ul></li>
 <li><a href="#satellite-navigation-subsystem"><span class="toc-section-number">2.5</span> Satellite navigation subsystem</a></li>
 </ul></li>
 <li><a href="#hardware"><span class="toc-section-number">3</span> Hardware</a></li>
@@ -495,8 +498,8 @@ Design goals and project overview<br /><br /><br /><br /><br /><br /><br /><br /
 <p>The image format is specified using the little-endian four-character code (FOURCC). V4L2 defines<sup><a href="#fn6" class="footnoteRef" id="fnref6">6</a></sup> several formats and provides <code>v4l2_fourcc()</code> macro to create a format code from four characters. As described later in the <a href="#graphics-subsystem">graphics subsystem</a> chapter, graphics uses natively the <em>RGB4</em> format. This format is defined as a single plane with one sample per pixel and four bytes per sample. These bytes represents red, green and blue channel values respectively. Image size is therefore <span class="math">\(width \cdot height \cdot 4\)</span> bytes. Many image sensors however support <em>YUV</em> color-space, for example the <em>YU12</em> format. This one is defined as three planes, the first plane with one luminance sample per pixel and the second and third plane with one chroma sample per four pixels (2 pixels per row, interleaved). Each sample has one byte, this format is also referenced as <em>YUV 4:2:0</em> and its image size is <span class="math">\(width \cdot height \cdot 1.5\)</span> bytes. The luminance and chroma of a pixel is defined as</p>
 <ol style="list-style-type: example">
 <li><p><span class="math">\(E_Y = W_R \cdot E_R + (1-W_R-W_B) \cdot E_G + W_B \cdot E_B\)</span></p></li>
-<li><p><span class="math">\(E_{C_r} = \frac {0.5 (E_R - E_Y)} {1 - W_R}\)</span></p></li>
-<li><p><span class="math">\(E_{C_b} = \frac {0.5 (E_B - E_Y)} {1 - W_B}\)</span></p></li>
+<li><p><span class="math">\(E_{C_r} = \dfrac {0.5 (E_R - E_Y)} {1 - W_R}\)</span></p></li>
+<li><p><span class="math">\(E_{C_b} = \dfrac {0.5 (E_B - E_Y)} {1 - W_B}\)</span></p></li>
 </ol>
 <p>where E<sub>R</sub>, E<sub>G</sub>, E<sub>B</sub> are normalized color values and W<sub>R</sub>, W<sub>B</sub> are their weights. ITU-R Rec. BT.601<sup><a href="#fn7" class="footnoteRef" id="fnref7">7</a></sup> defines weights as 0.299 and 0.114 respectively, it also defines how they are quantized</p>
 <ol start="4" style="list-style-type: example">
@@ -506,11 +509,11 @@ Design goals and project overview<br /><br /><br /><br /><br /><br /><br /><br /
 </ol>
 <p>To calculate R, G, B values from Y, Cr, Cb values, inverse formulas must be used</p>
 <ol start="7" style="list-style-type: example">
-<li><p><span class="math">\(E_Y = \frac {Y - 16} {219}\)</span></p></li>
-<li><p><span class="math">\(E_{C_r} =  \frac {C_r - 128} {224}\)</span></p></li>
-<li><p><span class="math">\(E_{C_b} = \frac {C_b - 128} {224}\)</span></p></li>
+<li><p><span class="math">\(E_Y = \dfrac {Y - 16} {219}\)</span></p></li>
+<li><p><span class="math">\(E_{C_r} =  \dfrac {C_r - 128} {224}\)</span></p></li>
+<li><p><span class="math">\(E_{C_b} = \dfrac {C_b - 128} {224}\)</span></p></li>
 <li><p><span class="math">\(E_R = E_Y + 2 E_{C_r} (1 - W_R)\)</span></p></li>
-<li><p><span class="math">\(E_G = E_Y - 2 E_{C_r} \frac {W_R - {W_R}^2} {W_G} - 2 E_{C_b} \frac {W_B - {W_B}^2} {W_G}\)</span></p></li>
+<li><p><span class="math">\(E_G = E_Y - 2 E_{C_r} \dfrac {W_R - {W_R}^2} {W_G} - 2 E_{C_b} \dfrac {W_B - {W_B}^2} {W_G}\)</span></p></li>
 <li><p><span class="math">\(E_B = E_Y + 2 E_{C_b} (1 - W_B)\)</span></p></li>
 </ol>
 <p>It should be noted that not all devices may use the BT.601 recommendation, V4L2 refers to it as <em>V4L2_COLORSPACE_SMPTE170M</em> in the <em>VIDIOC_S_FMT</em> request structure.</p>
@@ -556,9 +559,71 @@ varying vec2 texCoord;
 Graphics stack, OpenGL ES 2.0<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 </blockquote>
 <h2 id="inertial-measurement-subsystem"><a href="#inertial-measurement-subsystem"><span class="header-section-number">2.4</span> Inertial measurement subsystem</a></h2>
+<p>Application needs to know its spatial orientation for rendering, there three devices which may provide such information, gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the <a href="#hardware">hardware</a> chapter.</p>
+<h3 id="industrial-io-module"><a href="#industrial-io-module"><span class="header-section-number">2.4.1</span> Industrial I/O module</a></h3>
 <blockquote>
-Industrial I/O module and drivers, DCM algorithm<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+<p>Industrial I/O module</p>
 </blockquote>
+<h3 id="dcm-algorithm"><a href="#dcm-algorithm"><span class="header-section-number">2.4.2</span> DCM algorithm</a></h3>
+<p>Gyroscope measures angular speed around device axes, it offers high differential precision and fast sampling rate, however it suffers slight zero offset error. Device attitude can be obtained simply by integrating measured angular rates, provided that initial attitude is known. The angular rate is defined as</p>
+<ol start="13" style="list-style-type: example">
+<li><span class="math">\(\overrightarrow{\omega_g} = \frac{\mathrm{d}}{\mathrm{d}t} \overrightarrow{\Phi}_{(t)}\)</span></li>
+</ol>
+<p>so the angular displacement between last two samples is</p>
+<ol start="14" style="list-style-type: example">
+<li><span class="math">\(\left [\Phi_x, \Phi_y, \Phi_z \right ] = \left [ \omega_x, \omega_y, \omega_z \right ] \cdot _\Delta t\)</span></li>
+</ol>
+<p>This can be described as a rotation</p>
+<ol start="15" style="list-style-type: example">
+<li><span class="math">\(\mathbf{R}_{gyro} = \begin{bmatrix} 1 &amp; 0 &amp; 0 \\  0 &amp; \cos(\Phi_x) &amp; -\sin(\Phi_x) \\  0 &amp; \sin(\Phi_x) &amp; \cos(\Phi_x) \end{bmatrix} \times \begin{bmatrix} \cos(\Phi_y) &amp; 0 &amp; \sin(\Phi_y) \\  0 &amp; 1 &amp; 0 \\  -\sin(\Phi_y) &amp; 0 &amp; \cos(\Phi_y) \end{bmatrix} \times \begin{bmatrix} \cos(\Phi_z) &amp; -\sin(\Phi_y) &amp; 0 \\  \sin(\Phi_y) &amp; \cos(\Phi_y) &amp; 0 \\  0 &amp; 0 &amp; 1 \end{bmatrix}\)</span></li>
+</ol>
+<p>With <span class="math">\(_\Delta t\)</span> close to zero a small-angle approximation may be used to simplify <span class="math">\(\cos(x)=1\)</span>, <span class="math">\(\sin(x)=x\)</span></p>
+<ol start="16" style="list-style-type: example">
+<li><span class="math">\(\mathbf{R}_{gyro} \doteq \begin{bmatrix} 1 &amp; - \Phi_z &amp; \Phi_y \\ \Phi_x \Phi_y + \Phi_z &amp; 1 - \Phi_x \Phi_y \Phi_z &amp; - \Phi_x \\ \Phi_x \Phi_z - \Phi_y &amp; \Phi_x + \Phi_y \Phi_z &amp; 1 \end{bmatrix}\)</span></li>
+</ol>
+<p>Let's define the directional cosine matrix describing device attitude</p>
+<ol start="17" style="list-style-type: example">
+<li><span class="math">\(\mathbf{DCM} = \begin{bmatrix} \widehat{\mathbf{I}}\cdot \widehat{\mathbf{x}} &amp; \widehat{\mathbf{I}}\cdot \widehat{\mathbf{y}} &amp; \widehat{\mathbf{I}}\cdot \widehat{\mathbf{z}} \\ \widehat{\mathbf{J}}\cdot \widehat{\mathbf{x}} &amp; \widehat{\mathbf{J}}\cdot \widehat{\mathbf{y}} &amp; \widehat{\mathbf{J}}\cdot \widehat{\mathbf{z}} \\  \widehat{\mathbf{K}}\cdot \widehat{\mathbf{x}} &amp; \widehat{\mathbf{K}}\cdot \widehat{\mathbf{y}} &amp; \widehat{\mathbf{K}}\cdot \widehat{\mathbf{z}} \end{bmatrix} = \begin{bmatrix} \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{J}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \end{bmatrix}\)</span></li>
+</ol>
+<p>where <span class="math">\(\widehat{\mathbf{I}}\)</span> points to the north, <span class="math">\(\widehat{\mathbf{J}}\)</span> points to the east, <span class="math">\(\widehat{\mathbf{K}}\)</span> points to the ground and therefore <span class="math">\(\widehat{\mathbf{I}} = \widehat{\mathbf{J}} \times \widehat{\mathbf{K}}\)</span>. Roll, pitch and yaw angels in this matrix are</p>
+<ol start="18" style="list-style-type: example">
+<li><p><span class="math">\(\gamma = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{23}}{\mathbf{DCM}_{33}} \right )\)</span></p></li>
+<li><p><span class="math">\(\beta = \arcsin (\mathbf{DCM}_{13})\)</span></p></li>
+<li><p><span class="math">\(\alpha = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{12}}{\mathbf{DCM}_{11}} \right )\)</span></p></li>
+</ol>
+<p>DCM can be computed by applying consecutive rotations over time</p>
+<ol start="21" style="list-style-type: example">
+<li><span class="math">\(\mathbf{DCM}_{(t)}  =  \mathbf{R}_{gyro(t)} \times \mathbf{DCM}_{(t-1)}\)</span></li>
+</ol>
+<p>If the sampling rate is high enough (over 1kHz at least), this method is very accurate and has good dynamics over short periods of time, but in longer runs errors integrated during processing will cause serious drift (both numerical errors and zero offset errors). To mitigate these problems accelerometer and compass has to be used to provide the initial attitude and to fix the drift over time. Accelerometer measures external mechanical forces applied to the device together with gravitational force. However precision of these devices are generally worse and they have slower sampling rates. If there are no extern forces, it will measure the gravitational vector directly, thus providing the third row of the DCM.</p>
+<ol start="22" style="list-style-type: example">
+<li><span class="math">\(\overrightarrow{\mathbf{a}}_{acc} = g~ \widehat{\mathbf{K}}_{xyz} + \dfrac{\overrightarrow{\mathbf{F}}}{m}\)</span></li>
+</ol>
+<p>Angular error is</p>
+<ol start="23" style="list-style-type: example">
+<li><span class="math">\(\delta_{ERR} = \arccos \left ( \dfrac {\overrightarrow{\mathbf{a}}_{acc}} { \left | \overrightarrow{\mathbf{a}}_{acc} \right |} \cdot \widehat{\mathbf{K}}_{xyz} \right )\)</span></li>
+</ol>
+<p>increasing nonlinearly with magnitude of the force <span class="math">\(\overrightarrow{\mathbf{F}}\)</span>. When there is an external force applied, which is significant relative to gravitational force, measurements will degrade rapidly. There is a singularity during the free fall. This error may be corrected by using device speed measured by satellite navigation system with high sample rate (over 10Hz).</p>
+<ol start="24" style="list-style-type: example">
+<li><span class="math">\(\widehat{\mathbf{K}}_{xyz} = \dfrac {\overrightarrow{\mathbf{a}}_{acc} - \frac{\mathrm{d}}{\mathrm{d}t} {\overrightarrow{\mathbf{v}}_{GPS}}} {g}\)</span></li>
+</ol>
+<p>Magnetometer has similar properties, it measures magnetic flux density of the field the device is within. This should ideally result in a vector pointing to the north, therefore providing the first row of the DCM.</p>
+<ol start="25" style="list-style-type: example">
+<li><span class="math">\(\overrightarrow{\mathbf{I}}_{xyz} = \dfrac {\overrightarrow{\mathbf{B}}_{corr}} {\left | \overrightarrow{\mathbf{B}}_{corr} \right |}\)</span></li>
+</ol>
+<p>Magnetometers have even slower sampling rates and far worse precision, this is caused mainly by the field itself. First there are many local distortions in the Earth magnetic field, caused by nearby metal objects, they can be divided into hard-iron and soft-iron effects. Hard-iron distortion (sometimes referred as magnetic deviation) is caused by materials that produces magnetic field, that is added to the Earth magnetic field. This field can be simply subtracted to compensate this error</p>
+<ol start="26" style="list-style-type: example">
+<li><span class="math">\(\overrightarrow{\mathbf{B}}_{corr1} = \overrightarrow{\mathbf{B}}_{mag} - \frac{1}{2} \left [ \min(B_x) + \max(B_x), \min(B_y) + \max(B_y), \min(B_z) + \max(B_z) \right ]\)</span></li>
+</ol>
+<p>The soft-iron distortion is caused by soft magnetic materials, which influences the field in a way that is not additive. It may be observed as an ellipse when the device is turned around and the measured values are plotted. To compensate for this error, values has to be processed in a way that transforms the ellipse back to the circle. Further more the magnetic field of the Earth itself does not point to the geographic north, but is rotated by an angle specific to the location on the Earth surface. Magnetic inclination is the vertical portion of this rotation causing magnetic vector to incline to the ground, it may be fixed by using measurements from the accelerometer to make the magnetic vector perpendicular to the gravitational vector.</p>
+<ol start="27" style="list-style-type: example">
+<li><span class="math">\(\overrightarrow{\mathbf{B}}_{corr2} = \widehat{\mathbf{K}}_{xyz} \times \overrightarrow{\mathbf{B}}_{mag} \times \widehat{\mathbf{K}}_{xyz}\)</span></li>
+</ol>
+<p>Magnetic declination (sometimes referred as magnetic variation) is the horizontal portion of this rotation and is sometimes provided by the satellite navigation systems. To correct for this error, measured values have to be rotated by the inverse angle.</p>
+<ol start="28" style="list-style-type: example">
+<li><span class="math">\(\overrightarrow{\mathbf{B}}_{corr3} = \overrightarrow{\mathbf{B}}_{mag} \begin{bmatrix} \cos(var) &amp; \sin(var) \\ - \sin(var) &amp; \cos(var) \end{bmatrix}\)</span></li>
+</ol>
+<p>Weighted average should be used to combine the DCM calculated by gyroscope and the DCM composed of corrected accelerometer and magnetometer measurements, actual weights must be estimated by trial and error.</p>
 <h2 id="satellite-navigation-subsystem"><a href="#satellite-navigation-subsystem"><span class="header-section-number">2.5</span> Satellite navigation subsystem</a></h2>
 <blockquote>
 TTY module, stty, socat, GPS, NMEA 0183<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />

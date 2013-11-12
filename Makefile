@@ -1,4 +1,7 @@
 OPTIONS = --standalone --number-sections --table-of-contents
+OPTIONS += --variable=geometry:"margin=1in"
+OPTIONS += --variable=fontsize:12pt
+
 TEMPLATES = --template=templates/template.tex
 TEMPLATES += --include-in-header=templates/header.tex
 TEMPLATES += --include-before-body=templates/body.tex

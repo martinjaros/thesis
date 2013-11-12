@@ -139,9 +139,9 @@ The luminance and chroma of a pixel is defined as
 
 (@ey) $E_Y = W_R \cdot E_R + (1-W_R-W_B) \cdot E_G + W_B \cdot E_B$
 
-(@ecr) $E_{C_r} = \frac {0.5 (E_R - E_Y)} {1 - W_R}$
+(@ecr) $E_{C_r} = \dfrac {0.5 (E_R - E_Y)} {1 - W_R}$
 
-(@ecb) $E_{C_b} = \frac {0.5 (E_B - E_Y)} {1 - W_B}$
+(@ecb) $E_{C_b} = \dfrac {0.5 (E_B - E_Y)} {1 - W_B}$
 
 where E~R~, E~G~, E~B~ are normalized color values and W~R~, W~B~ are their weights.
 ITU-R Rec. BT.601[^bt601] defines weights as 0.299 and 0.114 respectively,
@@ -155,15 +155,15 @@ it also defines how they are quantized
 
 To calculate R, G, B values from Y, Cr, Cb values, inverse formulas must be used
 
-(@eyinv) $E_Y = \frac {Y - 16} {219}$
+(@eyinv) $E_Y = \dfrac {Y - 16} {219}$
 
-(@ecrinv) $E_{C_r} =  \frac {C_r - 128} {224}$
+(@ecrinv) $E_{C_r} =  \dfrac {C_r - 128} {224}$
 
-(@ecbinv) $E_{C_b} = \frac {C_b - 128} {224}$
+(@ecbinv) $E_{C_b} = \dfrac {C_b - 128} {224}$
 
 (@erinv) $E_R = E_Y + 2 E_{C_r} (1 - W_R)$
 
-(@eginv) $E_G = E_Y - 2 E_{C_r} \frac {W_R - {W_R}^2} {W_G} - 2 E_{C_b} \frac {W_B - {W_B}^2} {W_G}$
+(@eginv) $E_G = E_Y - 2 E_{C_r} \dfrac {W_R - {W_R}^2} {W_G} - 2 E_{C_b} \dfrac {W_B - {W_B}^2} {W_G}$
 
 (@ebinv) $E_B = E_Y + 2 E_{C_b} (1 - W_B)$
 
