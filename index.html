@@ -561,9 +561,40 @@ Graphics stack, OpenGL ES 2.0<br /><br /><br /><br /><br /><br /><br /><br /><br
 <h2 id="inertial-measurement-subsystem"><a href="#inertial-measurement-subsystem"><span class="header-section-number">2.4</span> Inertial measurement subsystem</a></h2>
 <p>Application needs to know its spatial orientation for rendering, there three devices which may provide such information, gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the <a href="#hardware">hardware</a> chapter.</p>
 <h3 id="industrial-io-module"><a href="#industrial-io-module"><span class="header-section-number">2.4.1</span> Industrial I/O module</a></h3>
-<blockquote>
-<p>Industrial I/O module</p>
-</blockquote>
+<p>A relatively young kernel module <em>iio</em> has been implemented<sup><a href="#fn12" class="footnoteRef" id="fnref12">12</a></sup> in recent kernels to provide standardized support for sensors and analog converters typically connected by I<sup>2</sup>C bus. While many device drivers are still in staging tree, to core module is ready for production code. Subsystem provides device structure mapped in <em>sysfs</em>, typically available at <code>/sys/bus/iio/devices/</code>. Device are implemented usually on top of the <em>i2c-dev</em> driver and registred as <code>/sys/bus/iio/devices/iio:deviceX</code>, where X is the device number and the device name may be obtained by</p>
+<p><code class="sourceCode bash"><span class="kw">cat</span> /sys/bus/iio/devices/iio:deviceX/name</code></p>
+<p>There are many possible channels, named by the value type they represents. To read an immediate value, for example from an ADC channel 1</p>
+<p><code class="sourceCode bash"><span class="kw">cat</span> /sys/bus/iio/devices/iio:deviceX/in_voltage1_raw</code><br /><code class="sourceCode bash"><span class="kw">cat</span> /sys/bus/iio/devices/iio:deviceX/in_voltage_scale</code></p>
+<p>where the result value in volts is <span class="math">\(raw \cdot scale\)</span>. However, being easy, this is not efficient, buffers have been implemented to stream measured data to the application. Buffer uses device file named after the <em>iio</em> device, e.g. <code>/dev/iio:deviceX</code>. To stream data through the buffer, driver needs to have control over the timing, triggers have been implemented for this purpose. They are accessible as <code>/sys/bus/iio/devices/triggerX</code>, where X is the trigger number and its name may be obtained by</p>
+<p><code class="sourceCode bash"><span class="kw">cat</span> /sys/bus/iio/devices/triggerX/name</code></p>
+<p>Software trigger may be created by</p>
+<p><code class="sourceCode bash"><span class="kw">echo</span> 1 <span class="kw">&gt;</span> /sys/bus/iio/iio_sysfs_trigger/add_trigger</code></p>
+<p>and triggered by application</p>
+<p><code class="sourceCode bash"><span class="kw">echo</span> 1 <span class="kw">&gt;</span> /sys/bus/iio/trigger0/trigger_now</code></p>
+<p>Name of this trigger is <em>sysfstrigX</em>, where X is the trigger number. Hardware triggers are also implemented, both GPIO and timer based triggers. Devices may implement triggers themselves, providing for example the data ready trigger. Device triggers are generally named as <em>name-devX</em>, where <em>name</em> is device name and X is device number. To use trigger with the buffer use</p>
+<p><code class="sourceCode bash"><span class="kw">echo</span> <span class="st">&quot;triggername&quot;</span> <span class="kw">&gt;</span> /sys/bus/iio/devices/iio:deviceX/trigger/current_trigger</code></p>
+<p>where <em>triggername</em> is the name of the trigger, for example <code>adc-dev0</code> will be the device trigger for the ADC. Data are measured in specific channels, they are defined in <code>/sys/bus/iio/devices/iio:device0/scan_elements</code>. Channels must be enabled for buffering individually, for example</p>
+<p><code class="sourceCode bash"><span class="kw">echo</span> 1 <span class="kw">&gt;</span> /sys/bus/iio/devices/iio:device0/scan_elements/in_voltage1_en</code><br /><code class="sourceCode bash"><span class="kw">echo</span> 1 <span class="kw">&gt;</span> /sys/bus/iio/devices/iio:device0/scan_elements/in_voltage2_en</code></p>
+<p>will enable ADC channels 1 and 2. Buffer itself can be started by</p>
+<p><code class="sourceCode bash"><span class="kw">echo</span> 256 <span class="kw">&gt;</span> /sys/bus/iio/devices/iio:deviceX/buffer/length</code><br /><code class="sourceCode bash"><span class="kw">echo</span> 1 <span class="kw">&gt;</span> /sys/bus/iio/devices/iio:deviceX/buffer/enabled</code></p>
+<p>this will start streaming data to the device file. Data are formatted in packets, each packed consists of per-channel values and is terminated by 8 byte time-stamp of the sample. Order of the channels in the buffer can be obtained by</p>
+<p><code class="sourceCode bash"><span class="kw">cat</span> /sys/bus/iio/devices/iio:device0/scan_elements/in_voltageX_index</code></p>
+<p>which reads index of the specified channel. Data format of this channel is</p>
+<p><code class="sourceCode bash"><span class="kw">cat</span> /sys/bus/iio/devices/iio:device0/scan_elements/in_voltageX_type</code></p>
+<p>which reads encoded string, for example <code>le:u10/16&gt;&gt;0</code>, where <em>le</em> means little-endian, <em>u</em> means unsigned, <em>10</em> is the number of relevant bits while <em>16</em> is the number of actual bits and <em>0</em> is the number of right shifts needed.</p>
+<p>Following channels are needed by the application</p>
+<ul>
+<li>anglvel_x</li>
+<li>anglvel_y</li>
+<li>anglvel_z</li>
+<li>accel_x</li>
+<li>accel_y</li>
+<li>accel_z</li>
+<li>magn_x</li>
+<li>magn_y</li>
+<li>magn_z</li>
+</ul>
+<p>representing measurements from gyroscope, accelerometer and magnetometer respectively.</p>
 <h3 id="dcm-algorithm"><a href="#dcm-algorithm"><span class="header-section-number">2.4.2</span> DCM algorithm</a></h3>
 <p>Gyroscope measures angular speed around device axes, it offers high differential precision and fast sampling rate, however it suffers slight zero offset error. Device attitude can be obtained simply by integrating measured angular rates, provided that initial attitude is known. The angular rate is defined as</p>
 <ol start="13" style="list-style-type: example">
@@ -659,6 +690,7 @@ Conclusion<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br 
 <li id="fn9"><p>GStreamer home page<br /><a href="http://gstreamer.freedesktop.org/">http://gstreamer.freedesktop.org/</a><a href="#fnref9">↩</a></p></li>
 <li id="fn10"><p>TI OMAP trunk PPA<br /><a href="https://launchpad.net/~tiomap-dev/+archive/omap-trunk">https://launchpad.net/~tiomap-dev/+archive/omap-trunk</a><a href="#fnref10">↩</a></p></li>
 <li id="fn11"><p>libjpeg-turbo library<br /><a href="http://www.libjpeg-turbo.org/">http://www.libjpeg-turbo.org/</a><a href="#fnref11">↩</a></p></li>
+<li id="fn12"><p>IIO subsytem description<br /><a href="https://wiki.analog.com/software/linux/docs/iio/iio">https://wiki.analog.com/software/linux/docs/iio/iio</a><a href="#fnref12">↩</a></p></li>
 </ol>
 </div>
 </body>

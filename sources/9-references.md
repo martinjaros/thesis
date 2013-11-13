@@ -73,3 +73,6 @@
 [^libjpeg]: libjpeg-turbo library\
 <http://www.libjpeg-turbo.org/>
 
+[^iio]: IIO subsytem description\
+<https://wiki.analog.com/software/linux/docs/iio/iio>
+
