@@ -137,35 +137,35 @@ This one is defined as three planes, the first plane with one luminance sample p
 (2 pixels per row, interleaved). Each sample has one byte, this format is also referenced as *YUV 4:2:0* and its image size is $width \cdot height \cdot 1.5$ bytes.
 The luminance and chroma of a pixel is defined as
 
-(@ey) $E_Y = W_R \cdot E_R + (1-W_R-W_B) \cdot E_G + W_B \cdot E_B$
+$E_Y = W_R \cdot E_R + (1-W_R-W_B) \cdot E_G + W_B \cdot E_B$,
 
-(@ecr) $E_{C_r} = \dfrac {0.5 (E_R - E_Y)} {1 - W_R}$
+$E_{C_r} = \dfrac {0.5 (E_R - E_Y)} {1 - W_R}$,
 
-(@ecb) $E_{C_b} = \dfrac {0.5 (E_B - E_Y)} {1 - W_B}$
+$E_{C_b} = \dfrac {0.5 (E_B - E_Y)} {1 - W_B}$,
 
 where E~R~, E~G~, E~B~ are normalized color values and W~R~, W~B~ are their weights.
 ITU-R Rec. BT.601[^bt601] defines weights as 0.299 and 0.114 respectively,
 it also defines how they are quantized
 
-(@y) $Y = 219 E_Y + 16$
+$Y = 219 E_Y + 16$,
 
-(@cr) $C_r = 224 E_{C_r} + 128$
+$C_r = 224 E_{C_r} + 128$,
 
-(@cb) $C_b = 224 E_{C_b} + 128$
+$C_b = 224 E_{C_b} + 128$.
 
 To calculate R, G, B values from Y, Cr, Cb values, inverse formulas must be used
 
-(@eyinv) $E_Y = \dfrac {Y - 16} {219}$
+$E_Y = \dfrac {Y - 16} {219}$,
 
-(@ecrinv) $E_{C_r} =  \dfrac {C_r - 128} {224}$
+$E_{C_r} =  \dfrac {C_r - 128} {224}$,
 
-(@ecbinv) $E_{C_b} = \dfrac {C_b - 128} {224}$
+$E_{C_b} = \dfrac {C_b - 128} {224}$,
 
-(@erinv) $E_R = E_Y + 2 E_{C_r} (1 - W_R)$
+$E_R = E_Y + 2 E_{C_r} (1 - W_R)$,
 
-(@eginv) $E_G = E_Y - 2 E_{C_r} \dfrac {W_R - {W_R}^2} {W_G} - 2 E_{C_b} \dfrac {W_B - {W_B}^2} {W_G}$
+$E_G = E_Y - 2 E_{C_r} \dfrac {W_R - {W_R}^2} {W_G} - 2 E_{C_b} \dfrac {W_B - {W_B}^2} {W_G}$,
 
-(@ebinv) $E_B = E_Y + 2 E_{C_b} (1 - W_B)$
+$E_B = E_Y + 2 E_{C_b} (1 - W_B)$.
 
 It should be noted that not all devices may use the BT.601 recommendation,
 V4L2 refers to it as *V4L2_COLORSPACE_SMPTE170M* in the *VIDIOC_S_FMT* request structure.
