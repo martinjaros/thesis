@@ -1,31 +1,28 @@
-OPTIONS = --standalone --number-sections --table-of-contents
-OPTIONS += --variable=geometry:"margin=1in"
-OPTIONS += --variable=fontsize:12pt
+TEX_OPTIONS = --number-sections --toc --template=templates/template.tex
+TEX_OPTIONS += --variable=geometry:"margin=1in"
+TEX_OPTIONS += --variable=fontsize:"12pt"
 
-TEMPLATES = --template=templates/template.tex
-TEMPLATES += --include-in-header=templates/header.tex
-TEMPLATES += --include-before-body=templates/body.tex
+HTML_OPTIONS = --toc --standalone --mathjax
 
 .PHONY: all clean
 
 all: document.pdf index.html
 
 clean:
-	@rm -f index.html document.pdf images/*.pdf sources/images_converted.txt
+	@rm -f index.html document.pdf images/*.pdf images/list-pdf.txt
 
 index.html: sources/* images/*
 	@echo $@
-	@pandoc $(OPTIONS) --mathjax -o $@ sources/header.txt sources/*.md sources/images.txt
+	@pandoc $(HTML_OPTIONS) -o $@ sources/*.md images/list-svg.txt
 
-document.pdf: sources/* templates/* samples/* sources/images_converted.txt $(patsubst %.svg, %.pdf, $(wildcard images/*.svg))
+document.pdf: sources/* templates/* samples/* $(patsubst %.svg, %.pdf, $(wildcard images/*.svg))
 	@echo $@
-	@pandoc $(OPTIONS) $(TEMPLATES) -o $@ sources/*.md sources/images_converted.txt
+	@pandoc $(TEX_OPTIONS) -o $@ sources/*.md images/list-pdf.txt
 
-images/%.pdf: images/%.svg
+images/%.pdf: images/%.svg | images/list-pdf.txt
 	@echo $@
 	@inkscape $< --export-pdf=$@
 
-sources/images_converted.txt: sources/images.txt
+images/list-pdf.txt: images/list-svg.txt
 	@echo $@
 	@sed 's/.svg/.pdf/g' $< > $@
-

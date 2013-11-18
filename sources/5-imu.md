@@ -5,10 +5,10 @@ gyroscope, compass (magnetometer) and accelerometer. Hardware details about thes
 
 ### Industrial I/O module
 
-A relatively young kernel module *iio* has been implemented[^iio] in recent kernels to provide standardized support
+A relatively young kernel module `iio` has been implemented in recent kernels to provide standardized support
 for sensors and analog converters typically connected by I^2^C bus. While many device drivers are still
-in staging tree, to core module is ready for production code. Subsystem provides device structure mapped in *sysfs*,
-typically available at `/sys/bus/iio/devices/`. Device are implemented usually on top of the *i2c-dev* driver and registred as
+in staging tree, to core module is ready for production code. Subsystem provides device structure mapped in `sysfs`,
+typically available at `/sys/bus/iio/devices/`. Device are implemented usually on top of the `i2c-dev` driver and registered as
 `/sys/bus/iio/devices/iio:deviceX`, where X is the device number and the device name may be obtained by
 
 `cat /sys/bus/iio/devices/iio:deviceX/name`{.bash}
@@ -22,7 +22,7 @@ To read an immediate value, for example from an ADC channel 1
 where the result value in volts is $raw \cdot scale$.
 However, being easy, this is not efficient,
 buffers have been implemented to stream measured data to the application.
-Buffer uses device file named after the *iio* device, e.g. `/dev/iio:deviceX`.
+Buffer uses device file named after the `iio` device, e.g. `/dev/iio:deviceX`.
 To stream data through the buffer, driver needs to have control over the timing,
 triggers have been implemented for this purpose. They are accessible as `/sys/bus/iio/devices/triggerX`,
 where X is the trigger number and its name may be obtained by
@@ -37,15 +37,15 @@ and triggered by application
 
 `echo 1 > /sys/bus/iio/trigger0/trigger_now`{.bash}
 
-Name of this trigger is *sysfstrigX*, where X is the trigger number.
+Name of this trigger is `sysfstrigX`, where X is the trigger number.
 Hardware triggers are also implemented, both GPIO and timer based triggers.
 Devices may implement triggers themselves, providing for example the data ready trigger.
-Device triggers are generally named as *name-devX*, where *name* is device name and X is device number.
+Device triggers are generally named as `name-devX`, where `name` is device name and `X` is device number.
 To use trigger with the buffer use
 
 `echo "triggername" > /sys/bus/iio/devices/iio:deviceX/trigger/current_trigger`{.bash}
 
-where *triggername* is the name of the trigger, for example `adc-dev0` will be the device trigger for the ADC.
+where `triggername` is the name of the trigger, for example `adc-dev0` will be the device trigger for the ADC.
 Data are measured in specific channels, they are defined in `/sys/bus/iio/devices/iio:device0/scan_elements`.
 Channels must be enabled for buffering individually, for example
 
@@ -68,20 +68,20 @@ which reads index of the specified channel. Data format of this channel is
 `cat /sys/bus/iio/devices/iio:device0/scan_elements/in_voltageX_type`{.bash}
 
 which reads encoded string, for example `le:u10/16>>0`,
-where *le* means little-endian, *u* means unsigned, *10* is the number of relevant bits while *16* is the number of actual bits
-and *0* is the number of right shifts needed.
+where `le` means little-endian, `u` means unsigned, `10` is the number of relevant bits while `16` is the number of actual bits
+and `0` is the number of right shifts needed.
 
-Following channels are needed by the application
+Following channels are needed by the application:
 
-- anglvel_x
-- anglvel_y
-- anglvel_z
-- accel_x
-- accel_y
-- accel_z
-- magn_x
-- magn_y
-- magn_z
+- `anglvel_x`
+- `anglvel_y`
+- `anglvel_z`
+- `accel_x`
+- `accel_y`
+- `accel_z`
+- `magn_x`
+- `magn_y`
+- `magn_z`
 
 representing measurements from gyroscope, accelerometer and magnetometer respectively.
 

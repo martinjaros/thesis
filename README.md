@@ -18,5 +18,4 @@ Following tools are needed to compile the document
  * inkscape
  * pandoc
  * texlive
- * texlive-latex-extra
 
