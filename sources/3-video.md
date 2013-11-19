@@ -1,13 +1,13 @@
 ## Video subsystem
 
-Video support in Linux kernel is maintained by the LinuxTV project,
+Video support in Linux kernel is maintained by the [LinuxTV][linuxtv] project,
 it implements the `videodev2` kernel module and defines the *V4L2* interface.
 Modules are part of the mainline kernel at `drivers/media/video/*` with header `linux/videodev2.h`.
 The core module is enabled by the `VIDEO_V4L2` configuration option,
 specific device drivers should be enabled by their respective options.
 V4L2 is the latest revision and is the most widespread video interface throughout Linux,
 drives are available from most hardware manufactures and usually mainlined or available as patches.
-The Linux Media Infrastructure API[[4]](#references) is a well documented interface shared by all devices.
+The [Linux Media Infrastructure API][v4l2api][[4]](#references) is a well documented interface shared by all devices.
 It provides abstraction layer for various device implementations,
 separating the platform details from the applications. Each video device has its device file
 and is controlled via *ioctl* calls. For streaming standard I/O functions are supported,
@@ -57,7 +57,7 @@ $E_{C_r} = \dfrac {0.5 (E_R - E_Y)} {1 - W_R}$,
 $E_{C_b} = \dfrac {0.5 (E_B - E_Y)} {1 - W_B}$,
 
 where *E~R~*, *E~G~*, *E~B~* are normalized color values and *W~R~*, *W~B~* are their weights.
-ITU-R Rec. BT.601[[5]](#references) defines weights as 0.299 and 0.114 respectively,
+[ITU-R Rec. BT.601][bt601][[5]](#references) defines weights as 0.299 and 0.114 respectively,
 it also defines how they are quantized
 
 $Y = 219 E_Y + 16$,
@@ -88,7 +88,7 @@ It is written in GLSL for fragment processor, see [graphics subsystem](#graphics
 
 There is a kernel module `v4l2loopback` which creates a video loop-back device, similar to network loop-back, allowing piping two video applications together.
 This is very useful not only for testing, but also for implementation of intermediate decoders.
-GStreamer is a powerful multimedia framework widespread in Linux distributions, composed of a core infrastructure and hundreds of plug-ins.
+[GStreamer][gstreamer] is a powerful multimedia framework widespread in Linux distributions, composed of a core infrastructure and hundreds of plug-ins.
 This command will create synthetic RGB4 video stream for the application, useful for testing
 
 `modprobe v4l2loopback`{.bash} \
@@ -96,7 +96,7 @@ This command will create synthetic RGB4 video stream for the application, useful
 `"video/x-raw,format=RGBx,width=800,height=600,framerate=20/1" \`{.bash} \
 `! v4l2sink device=/dev/video0`
 
-Texas Instruments distributes a meta package[[10]](#references) for their OMAP platform featuring all required modules and DSP firmware.
+Texas Instruments distributes a [meta package][tiomap][[10]](#references) for their OMAP platform featuring all required modules and DSP firmware.
 This includes kernel modules for *SysLink* inter-chip communication library, *Distributed Codec Engine* library and *ducati* plug-in for GStreamer.
 With the meta-package installed, it is very easy and efficient to implement mainstream encoded video formats.
 For example following command will create GStreamer pipeline to receive video payload over a network socket from an IP camera,
@@ -114,7 +114,7 @@ The YUV to RGB color space conversion must take place here, preferably implement
 
 Cortex-A9 cores on the OMAP4460 also have the NEON co-processor, capable of vector floating point math. Although not very supported by the GCC C compiler,
 there are many assembly written libraries implementing coders with the NEON acceleration.
-For example the *libjpeg-turbo* library is implementing the *libjpeg* interface. It is useful for USB cameras,
+For example the [*libjpeg-turbo*][libjpeg] library is implementing the *libjpeg* interface. It is useful for USB cameras,
 as the USB throughput is not high enough for raw high definition video, but is sufficient with JPEG coding (as most USB cameras supports JPEG, but does not support H.264).
 1080p JPEG stream decoded with this library via its GStreamer plug-in will consume about 90% of the single CPU core time (note that there are two CPU cores available).
 However, comparable to the AVC, JPEG encoding will cause visible quality degradation in the raw stream (video looks grainy).

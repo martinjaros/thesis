@@ -42,4 +42,10 @@
 [querybuf]:        http://linuxtv.org/downloads/v4l-dvb-apis/vidioc-querybuf.html
 [qbuf]:            http://linuxtv.org/downloads/v4l-dvb-apis/vidioc-qbuf.html
 [streamon]:        http://linuxtv.org/downloads/v4l-dvb-apis/vidioc-streamon.html
+[linuxtv]:         http://linuxtv.org
+[v4l2api]:         http://linuxtv.org/downloads/v4l-dvb-apis
+[bt601]:           http://www.itu.int/rec/R-REC-BT.601/en
+[gstreamer]:       http://gstreamer.freedesktop.org
+[tiomap]:          https://launchpad.net/~tiomap-dev/+archive/omap-trunk
+[libjpeg]:         http://www.libjpeg-turbo.org/
 

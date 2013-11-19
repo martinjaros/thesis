@@ -195,6 +195,11 @@ To correct for this error, measured values have to be rotated by the inverse ang
 $\overrightarrow{\mathbf{B}}_{corr3} = \overrightarrow{\mathbf{B}}_{mag} \begin{bmatrix} \cos(var) & \sin(var) \\ - \sin(var) & \cos(var) \end{bmatrix}$.
 
 By combination of the corrected results from accelerometer and magnetometer complete DCM can be calculated.
-Weighted average should be used to combine this DCM with the DCM calculated by gyroscope in real-time,
-actual weights must be estimated by trial and error, depending on the actual sensors used.
+Weighted average should be used, in real-time this yields
+
+$\mathbf{DCM}_{(t)}  =  W_{gyro}~ (\mathbf{R}_{gyro} \times \mathbf{DCM}_{(t-1)}) +
+(1 - W_{gyro}) \begin{bmatrix} \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \times \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \end{bmatrix}$,
+
+where $\widehat{\mathbf{I}}_{xyz}$ and $\widehat{\mathbf{K}}_{xyz}$ are calculated from magnetometer and accelerometer measurements.
+*W~gyro~* is the weight of the gyroscope measurement, it must be estimated by trial and error to mitigate its drift but not add too much noise.
 

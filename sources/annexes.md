@@ -3,35 +3,22 @@
 # Threads example {#appendixa}
 
 In this example two threads share standard input and output,
-access is restricted by *mutexes* so only one thread may use the shared resource at any time.
+access is restricted by *mutex* so only one thread may use the shared resource at any time.
 
 ~~~{.c .numberLines}
 #include <stdio.h>
 #include <pthread.h>
 
-void *worker1(void *arg)
+void *worker(void *arg)
 {
+    static int counter = 1;
     pthread_mutex_t *mutex = (pthread_mutex_t*)arg;
-    static char buffer[64];
+    char *buffer;
 
     // Lock mutex to restrict access to stdin and stdout
     pthread_mutex_lock(mutex);
-    printf("This is worker 1, enter something: ");
-    scanf("%64s", buffer);
-    pthread_mutex_unlock(mutex);
-
-    return (void*)buffer;
-}
-
-void *worker2(void *arg)
-{
-    pthread_mutex_t *mutex = (pthread_mutex_t*)arg;
-    static char buffer[64];
-
-    // Lock mutex to restrict access to stdin and stdout
-    pthread_mutex_lock(mutex);
-    printf("This is worker 2, enter something: ");
-    scanf("%64s", buffer);
+    printf("This is worker %d, enter something: ", counter++);
+    scanf("%ms", &buffer);
     pthread_mutex_unlock(mutex);
 
     return (void*)buffer;
@@ -45,8 +32,8 @@ int main()
 
     // Initialize two threads with shared mutex, use default parameters
     pthread_mutex_init(&mutex, NULL);
-    pthread_create(&thread1, NULL, worker1, (void*)&mutex);
-    pthread_create(&thread2, NULL, worker2, (void*)&mutex);
+    pthread_create(&thread1, NULL, worker, (void*)&mutex);
+    pthread_create(&thread2, NULL, worker, (void*)&mutex);
 
     // Wait for both threads to finish and display results
     pthread_join(thread1, (void**)&retval1);
