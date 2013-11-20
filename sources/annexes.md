@@ -1,6 +1,4 @@
-\appendix
-
-# Threads example {#appendixa}
+# Threads example
 
 In this example two threads share standard input and output,
 access is restricted by *mutex* so only one thread may use the shared resource at any time.
@@ -46,7 +44,7 @@ int main()
 }
 ~~~
 
-# Video capture example {#appendixb}
+# Video capture example
 
 In this example video device is configured to capture frames using memory mapping.
 These frames are dumped to standard output, instead of further processing.
@@ -137,7 +135,7 @@ int main()
 ~~~
 <!-- -->
 
-# Colorspace conversion example {#appendixc}
+# Colorspace conversion example
 
 In this example RGB to YUV color-space conversion is implemented in fragment shader.
 Each input channel has its own texturing unit, texture coordinates are divided by sub-sampling factor 4:2:0.

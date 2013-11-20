@@ -4,5 +4,5 @@
 
 # Preface {.unnumbered}
 
-> Introduction
+> Introduction [@Bimber2005]
 

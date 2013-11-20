@@ -1,6 +1,7 @@
 \documentclass[$if(fontsize)$$fontsize$,$endif$$if(lang)$$lang$,$endif$$if(papersize)$$papersize$,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{$documentclass$}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
+\usepackage{titletoc}
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \usepackage{fixltx2e} % provides \textsubscript
@@ -150,13 +151,8 @@ $endif$
 \renewcommand*{\section}{\clearpage\stdsection}
 
 \begin{document}
-
 \clearpage
 \pagenumbering{gobble}
-\includepdf[pages=-]{samples/cover.pdf}
-\includepdf[pages=-]{samples/title1.pdf}
-\includepdf[pages=-]{samples/title2.pdf}
-\includepdf[pages=-]{samples/title3.pdf}
 
 $for(include-before)$
 $include-before$
@@ -166,7 +162,9 @@ $if(toc)$
 {
 \hypersetup{linkcolor=black}
 \setcounter{tocdepth}{$toc-depth$}
-\tableofcontents
+\pdfbookmark[section]{\contentsname}{\contentsname}
+\startcontents
+\printcontents{}{1}{\section*{\contentsname}}
 \newpage
 \listoffigures
 \newpage
@@ -195,6 +193,7 @@ $if(biblatex)$
 \printbibliography$if(biblio-title)$[title=$biblio-title$]$endif$
 
 $endif$
+
 $for(include-after)$
 $include-after$
 

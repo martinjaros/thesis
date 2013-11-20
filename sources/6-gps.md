@@ -1,5 +1,4 @@
 ## Satellite navigation subsystem
 
-> TTY module, stty, socat, GPS, NMEA 0183
-
+> TTY module, stty, socat, GPS [@Kennedy2000], NMEA 0183 [@NMEA0183]
 

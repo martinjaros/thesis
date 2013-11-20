@@ -7,7 +7,7 @@ The core module is enabled by the `VIDEO_V4L2` configuration option,
 specific device drivers should be enabled by their respective options.
 V4L2 is the latest revision and is the most widespread video interface throughout Linux,
 drives are available from most hardware manufactures and usually mainlined or available as patches.
-The [Linux Media Infrastructure API][v4l2api][[4]](#references) is a well documented interface shared by all devices.
+The [Linux Media Infrastructure API][v4l2api][@LinuxTV] is a well documented interface shared by all devices.
 It provides abstraction layer for various device implementations,
 separating the platform details from the applications. Each video device has its device file
 and is controlled via *ioctl* calls. For streaming standard I/O functions are supported,
@@ -39,7 +39,7 @@ Note that buffers should be properly unmapped by the application after stopping 
 
 ![V4L2 capture][v4l2capture]
 
-Source example for simple video capture is in [appendix B](#appendixb).
+Source code for simple video capture is in [video capture example](#video-capture-example) appendix.
 The image format is specified using the little-endian four-character code (FOURCC).
 V4L2 defines several formats and provides `v4l2_fourcc()` macro to create a format code from four characters.
 As described later in the [graphics subsystem](#graphics-subsystem) chapter, graphics uses natively the RGB4 format.
@@ -57,7 +57,7 @@ $E_{C_r} = \dfrac {0.5 (E_R - E_Y)} {1 - W_R}$,
 $E_{C_b} = \dfrac {0.5 (E_B - E_Y)} {1 - W_B}$,
 
 where *E~R~*, *E~G~*, *E~B~* are normalized color values and *W~R~*, *W~B~* are their weights.
-[ITU-R Rec. BT.601][bt601][[5]](#references) defines weights as 0.299 and 0.114 respectively,
+[ITU-R Rec. BT.601][bt601][@BT601] defines weights as 0.299 and 0.114 respectively,
 it also defines how they are quantized
 
 $Y = 219 E_Y + 16$,
@@ -83,7 +83,7 @@ $E_B = E_Y + 2 E_{C_b} (1 - W_B)$.
 It should be noted that not all devices may use the BT.601 recommendation,
 V4L2 refers to it as `V4L2_COLORSPACE_SMPTE170M` in the `VIDIOC_S_FMT` request structure.
 Implementation of the YUV to RGB color-space conversion is most efficient on graphics accelerators,
-such example is included in [appendix C](#appendixc).
+such example is included in [colorspace conversion example](#colorspace-conversion-example) appendix.
 It is written in GLSL for fragment processor, see [graphics subsystem](#graphics-subsystem) chapter for further description.
 
 There is a kernel module `v4l2loopback` which creates a video loop-back device, similar to network loop-back, allowing piping two video applications together.
@@ -96,7 +96,7 @@ This command will create synthetic RGB4 video stream for the application, useful
 `"video/x-raw,format=RGBx,width=800,height=600,framerate=20/1" \`{.bash} \
 `! v4l2sink device=/dev/video0`
 
-Texas Instruments distributes a [meta package][tiomap][[10]](#references) for their OMAP platform featuring all required modules and DSP firmware.
+Texas Instruments distributes a [meta package][tiomap][@TIOMAP] for their OMAP platform featuring all required modules and DSP firmware.
 This includes kernel modules for *SysLink* inter-chip communication library, *Distributed Codec Engine* library and *ducati* plug-in for GStreamer.
 With the meta-package installed, it is very easy and efficient to implement mainstream encoded video formats.
 For example following command will create GStreamer pipeline to receive video payload over a network socket from an IP camera,

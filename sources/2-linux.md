@@ -37,8 +37,8 @@ Threads share memory within a process, memory access to these shared resources m
 with care to avoid race conditions and data corruption. Kernel provides *mutex* objects to lock
 threads and avoid simultaneous memory access. Each shared resource should be attached to a *mutex*,
 which is locked during access to this resource. Thread must not lock *mutex* while still holding lock
-to this or any other *mutex* in order to avoid dead-locking. Source example on how to use threads is in the
-[appendix A](#appendixa).
+to this or any other *mutex* in order to avoid dead-locking. Source code on how to use threads is in the
+[threads example](#threads-example) appendix.
 
 Linux kernel has monolithic structure, so all device drivers resides in the kernel-space.
 From application point of view, this means that all peripheral access must be done

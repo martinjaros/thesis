@@ -87,6 +87,7 @@ representing measurements from gyroscope, accelerometer and magnetometer respect
 
 ### DCM algorithm
 
+Equations needed to calculate device attitude have been derived from [@Jazar2010].
 Gyroscope measures angular speed around device axes, it offers high differential precision and fast sampling rate,
 however it suffers slight zero offset error. Device attitude can be obtained simply by integrating measured angular rates,
 provided that initial attitude is known. The angular rate is defined as

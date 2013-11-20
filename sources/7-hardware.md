@@ -1,6 +1,6 @@
 # Hardware
 
-**[OMAP4460][omap4460] application processor**[[8]](#references)
+**[OMAP4460][omap4460] application processor**[@OMAP4460]
 
  - two ARM Cortex-A9 SMP general-purpose processors
  - IVA 3 video accelerator, 1080p capable
@@ -9,7 +9,7 @@
  - HDMI v1.3 video output
 
 
-**[MPU-9150][mpu9150] motion tracking device**[[9]](#references)
+**[MPU-9150][mpu9150] motion tracking device**[@MPU9150]
 
  - embedded MPU-6050 3-axis gyroscope and accelerometer
  - embedded AK8975 3-axis digital compass
