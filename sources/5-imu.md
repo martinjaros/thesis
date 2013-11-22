@@ -1,6 +1,6 @@
 ## Inertial measurement subsystem
 
-Application needs to know its spatial orientation for rendering, there three devices which may provide such information,
+Application needs to know its spatial orientation for rendering, there are three devices which may provide such information,
 gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the [hardware](#hardware) chapter.
 
 ### Industrial I/O module

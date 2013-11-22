@@ -30,4 +30,7 @@
 [gstreamer]:       http://gstreamer.freedesktop.org
 [tiomap]:          https://launchpad.net/~tiomap-dev/+archive/omap-trunk
 [libjpeg]:         http://www.libjpeg-turbo.org/
+[stty]:            http://linux.die.net/man/1/stty
+[socat]:           http://linux.die.net/man/1/socat
+[nmea0183]:        http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp
 

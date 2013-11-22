@@ -1,8 +1,8 @@
 # Augmented reality
 
-## Design goals
+## Project overview
 
-> Project overview
+> TODO: Project overview
 
 ![Project overview][arnav]
 

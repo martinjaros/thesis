@@ -1,5 +1,7 @@
 # Hardware
 
+> TODO: Hardware description
+
 **[OMAP4460][omap4460] application processor**[@OMAP4460]
 
  - two ARM Cortex-A9 SMP general-purpose processors
