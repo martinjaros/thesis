@@ -1,5 +1,28 @@
 # Application
 
+Application is divided into four subsystem, each being standalone component.
+The [video subsystem](#video-subsystem) is responsible for enumeration and control of the video architecture and its devices.
+It provides the application with raw video buffers and means to configure its format.
+It is designed to support high range of devices from embedded image sensors to external cameras,
+while using single application interface and common image format.
+Depending on the hardware, high definition video output is expected.
+Video subsystem is optimized for synchronous operation with the [graphics subsystem](#graphics-subsystem).
+Graphics subsystem utilizes platform interfaces for its graphic accelerator units to provide optimized video processing and rendering.
+It is hardware independent through common library support to run on most embedded systems.
+Its goal is to provide application with efficient methods for rendering primitives, video frames and vector fonts
+with object oriented interface. These methods combined will create the scene overlay over the source video in real time.
+Graphic output should be high definition digital, maintaining source quality.
+Data needed for the overlay creating are provided by [satellite](#satellite-navigation-subsystem) and [inertial](#inertial-measurement-subsystem) subsystems.
+They are both designed for asynchronous operation. The satellite navigation provides application with positional and kinematic data.
+It is responsible for communication with external navigation systems such as GPS receivers and all needed calculations.
+Its interfaces allows application to access required information asynchronously as needed by the rendering loop.
+The inertial measurement subsystem utilizes sensors needed for spatial orientation not provided by satellite navigation.
+As there are many such sensor, common interface is provided. Subsystem handles all initialization, control, data acquisition
+and required calculations. Its internal state machine provides application the requested data on demand.
+Application is designed to be modular and highly configurable.
+All constants used throughout the implementation are defined with a default value and modifiable through the configuration file.
+This includes for example video setup, device selection or rendering parameters.
+
 ## Linux kernel
 
 Programs running in Linux are divided into two groups, kernel-space and user-space.

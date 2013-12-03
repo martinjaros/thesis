@@ -21,11 +21,11 @@ clean:
 
 index.html: sources/* templates/* images/*
 	@echo $@
-	@pandoc $(HTML_OPTIONS) -o $@ sources/[0-9]*.md sources/annexes.md sources/references.md images/list-svg.txt
+	@pandoc $(HTML_OPTIONS) -o $@ sources/[0-9]*.md sources/annexes.md sources/references.md images/list-src.txt
 
 document.pdf: sources/* templates/* samples/* $(patsubst %.svg, %.pdf, $(wildcard images/*.svg))
 	@echo $@
-	@pandoc $(TEX_OPTIONS) --template=templates/annexes.tex -o /tmp/tex2pdf-annexes.tex sources/annexes.md
+	@pandoc $(TEX_OPTIONS) --template=templates/annexes.tex -o /tmp/tex2pdf-annexes.tex sources/annexes.md images/list-pdf.txt
 	@pandoc $(TEX_OPTIONS) $(TEX_TEMPLATES) --include-after-body=/tmp/tex2pdf-annexes.tex -o $@ sources/[0-9]*.md sources/references.md images/list-pdf.txt
 	@rm /tmp/tex2pdf-annexes.tex
 
@@ -33,6 +33,6 @@ images/%.pdf: images/%.svg | images/list-pdf.txt
 	@echo $@
 	@inkscape $< --export-pdf=$@
 
-images/list-pdf.txt: images/list-svg.txt
+images/list-pdf.txt: images/list-src.txt
 	@echo $@
 	@sed 's/.svg/.pdf/g' $< > $@

@@ -2,9 +2,21 @@
 
 ## Project overview
 
-> TODO: Project overview
+Main goal of this project is to develop a device capable of rendering a real time overlay over the captured video frame.
+There are three external inputs, the image sensor capable of video capture feeds real-time images to the system.
+The GPS receiver delivers positional information and inertial sensors supplement it with spatial orientation.
+Expected setup is that the image and inertial sensors are on a single rack able to freely rotate around,
+while the GPS receiver is static, relative to the whole moving platform (vehicle for example).
+The overlay consists of fixed kinematic data such as speed or altitude, reference indicators such a horizon line and dynamic location markers.
+These will be spatially aligned with real locations visible in the video thus providing navigation information.
+They work in a way that wherever the camera is pointed to, specific landmarks will label currently visible locations.
+Complex external navigation system may be also connected. This allows integration with already existing systems,
+such as moving map systems, PDAs or other specialized hardware.
+These provides user with classic route navigation and map projection, while this project gives spatial extension to further improve total situational awareness.
+The analogy are the head up and head down displays, each delivering specific set of information.
+This project is focuses on visual enhancement instead of a full featured navigation device.
 
-![Project overview][arnav]
+![Project overview][overview]
 
 ## Hardware limitations
 

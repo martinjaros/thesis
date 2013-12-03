@@ -1,2 +1,3 @@
 [v4l2capture]:     images/v4l2capture.pdf
-[arnav]:           images/arnav.pdf
+[overview]:        images/overview.pdf
+[output]:          images/output.png

@@ -38,7 +38,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <ul>
 <li><a href="#preface">Preface</a></li>
 <li><a href="#augmented-reality">Augmented reality</a><ul>
-<li><a href="#design-goals">Design goals</a></li>
+<li><a href="#project-overview">Project overview</a></li>
 <li><a href="#hardware-limitations">Hardware limitations</a></li>
 </ul></li>
 <li><a href="#application">Application</a><ul>
@@ -49,31 +49,36 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li><a href="#industrial-io-module">Industrial I/O module</a></li>
 <li><a href="#dcm-algorithm">DCM algorithm</a></li>
 </ul></li>
-<li><a href="#satellite-navigation-subsystem">Satellite navigation subsystem</a></li>
+<li><a href="#satellite-navigation-subsystem">Satellite navigation subsystem</a><ul>
+<li><a href="#communication">Communication</a></li>
+<li><a href="#navigation">Navigation</a></li>
+</ul></li>
+<li><a href="#output-creation">Output creation</a></li>
 </ul></li>
 <li><a href="#hardware">Hardware</a></li>
 <li><a href="#conclusion">Conclusion</a></li>
-<li><a href="#appendixa">Threads example</a></li>
-<li><a href="#appendixb">Video capture example</a></li>
-<li><a href="#appendixc">Colorspace conversion example</a></li>
+<li><a href="#threads-example">Threads example</a></li>
+<li><a href="#video-capture-example">Video capture example</a></li>
+<li><a href="#colorspace-conversion-example">Colorspace conversion example</a></li>
+<li><a href="#output-image-example">Output image example</a></li>
+<li><a href="#references">References</a></li>
 </ul>
 </div>
 <h1 id="preface" class="unnumbered"><a href="#preface">Preface</a></h1>
 <blockquote>
-<p>Introduction <span class="citation">[1]</span></p>
+<p>TODO: Introduction <span class="citation">[1]</span></p>
 </blockquote>
 <h1 id="augmented-reality"><a href="#augmented-reality">Augmented reality</a></h1>
-<h2 id="design-goals"><a href="#design-goals">Design goals</a></h2>
-<blockquote>
-<p>Project overview</p>
-</blockquote>
+<h2 id="project-overview"><a href="#project-overview">Project overview</a></h2>
+<p>Main goal of this project is to develop a device capable of rendering a real time overlay over the captured video frame. There are three external inputs, the image sensor capable of video capture feeds real-time images to the system. The GPS receiver delivers positional information and inertial sensors supplement it with spatial orientation. Expected setup is that the image and inertial sensors are on a single rack able to freely rotate around, while the GPS receiver is static, relative to the whole moving platform (vehicle for example). The overlay consists of fixed kinematic data such as speed or altitude, reference indicators such a horizon line and dynamic location markers. These will be spatially aligned with real locations visible in the video thus providing navigation information. They work in a way that wherever the camera is pointed to, specific landmarks will label currently visible locations. Complex external navigation system may be also connected. This allows integration with already existing systems, such as moving map systems, PDAs or other specialized hardware. These provides user with classic route navigation and map projection, while this project gives spatial extension to further improve total situational awareness. The analogy are the head up and head down displays, each delivering specific set of information. This project is focuses on visual enhancement instead of a full featured navigation device.</p>
 <div class="figure">
-<img src="images/arnav.svg" alt="Project overview" /><p class="caption">Project overview</p>
+<img src="images/overview.svg" alt="Project overview" /><p class="caption">Project overview</p>
 </div>
 <h2 id="hardware-limitations"><a href="#hardware-limitations">Hardware limitations</a></h2>
 <p>Application is designed to run in embedded environments, where power management is very important. While many platforms features multiple symmetrical processor cores - CPUs, application should focus on lowest per-core usage as possible. This can be done by delegating specific tasks to specialized hardware. CPU is specialized in execution of a single thread, integer and bitwise operations, with many branches in its code. With vector and floating point extensions they are also very efficient in computation of difficult mathematical algorithms. However they do not perform well in simple calculations over large amounts of data, where mass parallelization is possible. This is the case in graphics where special graphics processors - GPUs have been deployed. GPU consists of high number (hundreds) of simple cores, which are able to perform operations over large blocks of data. They scale efficiently with the amount of data needed to be processed due to parallelization, however they have problems with nonlinear code with branches. While CPUs have long pipelines for branch optimizations, GPUs cannot employ those, any branch in their code will be extremely inefficient and should be avoided. <a href="#graphics-subsystem">Graphics</a> chapter focuses on this area. There are also available specialized subsystems designed and optimized for a single purpose. For example video accelerators, capable of video encoding and decoding, image capture systems or peripheral drivers. They will be mentioned in specific chapters.</p>
 <p>Developing an application for an embedded device faces a problem, as there are big differences between these devices it is hard to support the hardware and make the application portable. In order to reuse code and reduce application size, libraries are generally used to create an intermediary layer between application and the hardware. However, to provide enough abstraction some sort of operating system has to be used. Operating systems may be real-time, giving applications full control, behaving just like large libraries. This is favorable approach in embedded systems as it allows precise timings. There are many such systems specially tailored for embedded applications like <a href="http://www.freertos.org">FreeRTOS</a> or proprietary <a href="http://www.windriver.com/products/vxworks">VxWorks</a>. On the other hand, as recent processors improved greatly in power, efficiency and capabilities, it is possible and quite feasible to run a full featured system like <a href="http://www.elinux.org">Linux</a> or proprietary <a href="http://www.microsoft.com/windowsembedded">Windows CE</a>. Linux kernel is highly portable and configurable, although it does restrict applications from real-time use (Linux RT patches also exist for real-time applications), as all hardware dependent modules which requires full control over the hardware are part of the kernel itself, application does not need to run in real-time at all. Other advantages are free, open and well documented sources, highly standardized and POSIX compliant application interface, large amount of drivers with good manufacturer support. While its disadvantages are very large code base and steep learning curve, which may slow the initial development. Nevertheless Linux kernel has been chosen for the project, more details about its interfaces are in the <a href="#linux-kernel">Linux kernel</a> chapter. While the application is designed to be highly portable depending only on the kernel itself, several devices has been chosen as the reference, they are listed in the <a href="#hardware">hardware</a> chapter.</p>
 <h1 id="application"><a href="#application">Application</a></h1>
+<p>Application is divided into four subsystem, each being standalone component. The <a href="#video-subsystem">video subsystem</a> is responsible for enumeration and control of the video architecture and its devices. It provides the application with raw video buffers and means to configure its format. It is designed to support high range of devices from embedded image sensors to external cameras, while using single application interface and common image format. Depending on the hardware, high definition video output is expected. Video subsystem is optimized for synchronous operation with the <a href="#graphics-subsystem">graphics subsystem</a>. Graphics subsystem utilizes platform interfaces for its graphic accelerator units to provide optimized video processing and rendering. It is hardware independent through common library support to run on most embedded systems. Its goal is to provide application with efficient methods for rendering primitives, video frames and vector fonts with object oriented interface. These methods combined will create the scene overlay over the source video in real time. Graphic output should be high definition digital, maintaining source quality. Data needed for the overlay creating are provided by <a href="#satellite-navigation-subsystem">satellite</a> and <a href="#inertial-measurement-subsystem">inertial</a> subsystems. They are both designed for asynchronous operation. The satellite navigation provides application with positional and kinematic data. It is responsible for communication with external navigation systems such as GPS receivers and all needed calculations. Its interfaces allows application to access required information asynchronously as needed by the rendering loop. The inertial measurement subsystem utilizes sensors needed for spatial orientation not provided by satellite navigation. As there are many such sensor, common interface is provided. Subsystem handles all initialization, control, data acquisition and required calculations. Its internal state machine provides application the requested data on demand. Application is designed to be modular and highly configurable. All constants used throughout the implementation are defined with a default value and modifiable through the configuration file. This includes for example video setup, device selection or rendering parameters.</p>
 <h2 id="linux-kernel"><a href="#linux-kernel">Linux kernel</a></h2>
 <p>Programs running in Linux are divided into two groups, kernel-space and user-space. Only kernel and its runtime modules are allowed to execute in kernel-space, they have physical memory access and use CPU in real-time. All other programs runs as processes in user-space, they have virtual memory access, which means their memory addresses are translated to the physical addresses in the background. In Linux each process runs in a sandbox, isolated from the rest of the system. Processes access memory unique to them, they cannot access memory assigned for other processes nor memory managed by the kernel. They may communicate with the outside environment by several means:</p>
 <ul>
@@ -87,7 +92,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p>Each process is ran with several arguments in a specific environment with three default file descriptors. For example running</p>
 <p><code class="sourceCode bash"><span class="ot">VARIABLE=</span>value <span class="kw">./executable</span> argument1 argument2 <span class="kw">&lt;</span>input <span class="kw">1&gt;</span>output <span class="kw">2&gt;</span>error</code></p>
 <p>will execute <code>executable</code> with environment variable <code>VARIABLE</code> of value <code>value</code> with two arguments <code>argument1</code> and <code>argument2</code>. Standard input will be read from file <code>input</code> while regular output will be written to file <code>output</code> and error output to file <code>error</code>. This process may further communicate by accessing files in the Virtual File System, kernel may expose useful process information for example via <code>procfs</code> file-system usually mounted at <code>/proc</code>. Other types of communication are signals (which may be sent between processes or by kernel) and network sockets. With internal network loop-back device, network style inter process communication is possible using standard protocols (UDP, TCP, ...). Memory mapping is a way to request access to some part of the physical memory.</p>
-<p>Process execution is not real-time, but they are assigned restricted processor time by the kernel. They may run in numerous threads, each thread has preemptively scheduled execution. Threads share memory within a process, memory access to these shared resources must done with care to avoid race conditions and data corruption. Kernel provides <em>mutex</em> objects to lock threads and avoid simultaneous memory access. Each shared resource should be attached to a <em>mutex</em>, which is locked during access to this resource. Thread must not lock <em>mutex</em> while still holding lock to this or any other <em>mutex</em> in order to avoid dead-locking. Source example on how to use threads is in the <a href="#appendixa">appendix A</a>.</p>
+<p>Process execution is not real-time, but they are assigned restricted processor time by the kernel. They may run in numerous threads, each thread has preemptively scheduled execution. Threads share memory within a process, memory access to these shared resources must done with care to avoid race conditions and data corruption. Kernel provides <em>mutex</em> objects to lock threads and avoid simultaneous memory access. Each shared resource should be attached to a <em>mutex</em>, which is locked during access to this resource. Thread must not lock <em>mutex</em> while still holding lock to this or any other <em>mutex</em> in order to avoid dead-locking. Source code on how to use threads is in the <a href="#threads-example">threads example</a> appendix.</p>
 <p>Linux kernel has monolithic structure, so all device drivers resides in the kernel-space. From application point of view, this means that all peripheral access must be done through the standard library and Virtual File System. Individual devices are accessible as device files defined by major and minor number typically located at <code>/dev</code>. These files could be created automatically by kernel (<code>devtmpfs</code> file-system), by daemon (<a href="http://linux.die.net/man/8/udev"><code>udev(8)</code></a>)), or manually by <a href="http://linux.die.net/man/1/mknod"><code>mknod(1)</code></a>. Complete kernel device model is exported as <code>sysfs</code> file-system and typically mounted at <code>/sys</code>.</p>
 <table>
 <caption>Available functions for working with device file descriptors</caption>
@@ -183,7 +188,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <div class="figure">
 <img src="images/v4l2capture.svg" alt="V4L2 capture" /><p class="caption">V4L2 capture</p>
 </div>
-<p>Source example for simple video capture is in <a href="#appendixb">appendix B</a>. The image format is specified using the little-endian four-character code (FOURCC). V4L2 defines several formats and provides <code>v4l2_fourcc()</code> macro to create a format code from four characters. As described later in the <a href="#graphics-subsystem">graphics subsystem</a> chapter, graphics uses natively the RGB4 format. This format is defined as a single plane with one sample per pixel and four bytes per sample. These bytes represents red, green and blue channel values respectively. Image size is therefore <span class="math">\(width \cdot height \cdot 4\)</span> bytes. Many image sensors however support YUV color-space, for example the YU12 format. This one is defined as three planes, the first plane with one luminance sample per pixel and the second and third plane with one chroma sample per four pixels (2 pixels per row, interleaved). Each sample has one byte, this format is also referenced as YUV 4:2:0 and its image size is <span class="math">\(width \cdot height \cdot 1.5\)</span> bytes. The luminance and chroma of a pixel is defined as</p>
+<p>Source code for simple video capture is in <a href="#video-capture-example">video capture example</a> appendix. The image format is specified using the little-endian four-character code (FOURCC). V4L2 defines several formats and provides <code>v4l2_fourcc()</code> macro to create a format code from four characters. As described later in the <a href="#graphics-subsystem">graphics subsystem</a> chapter, graphics uses natively the RGB4 format. This format is defined as a single plane with one sample per pixel and four bytes per sample. These bytes represents red, green and blue channel values respectively. Image size is therefore <span class="math">\(width \cdot height \cdot 4\)</span> bytes. Many image sensors however support YUV color-space, for example the YU12 format. This one is defined as three planes, the first plane with one luminance sample per pixel and the second and third plane with one chroma sample per four pixels (2 pixels per row, interleaved). Each sample has one byte, this format is also referenced as YUV 4:2:0 and its image size is <span class="math">\(width \cdot height \cdot 1.5\)</span> bytes. The luminance and chroma of a pixel is defined as</p>
 <p><span class="math">\(E_Y = W_R \cdot E_R + (1-W_R-W_B) \cdot E_G + W_B \cdot E_B\)</span>,</p>
 <p><span class="math">\(E_{C_r} = \dfrac {0.5 (E_R - E_Y)} {1 - W_R}\)</span>,</p>
 <p><span class="math">\(E_{C_b} = \dfrac {0.5 (E_B - E_Y)} {1 - W_B}\)</span>,</p>
@@ -198,7 +203,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p><span class="math">\(E_R = E_Y + 2 E_{C_r} (1 - W_R)\)</span>,</p>
 <p><span class="math">\(E_G = E_Y - 2 E_{C_r} \dfrac {W_R - {W_R}^2} {W_G} - 2 E_{C_b} \dfrac {W_B - {W_B}^2} {W_G}\)</span>,</p>
 <p><span class="math">\(E_B = E_Y + 2 E_{C_b} (1 - W_B)\)</span>.</p>
-<p>It should be noted that not all devices may use the BT.601 recommendation, V4L2 refers to it as <code>V4L2_COLORSPACE_SMPTE170M</code> in the <code>VIDIOC_S_FMT</code> request structure. Implementation of the YUV to RGB color-space conversion is most efficient on graphics accelerators, such example is included in <a href="#appendixc">appendix C</a>. It is written in GLSL for fragment processor, see <a href="#graphics-subsystem">graphics subsystem</a> chapter for further description.</p>
+<p>It should be noted that not all devices may use the BT.601 recommendation, V4L2 refers to it as <code>V4L2_COLORSPACE_SMPTE170M</code> in the <code>VIDIOC_S_FMT</code> request structure. Implementation of the YUV to RGB color-space conversion is most efficient on graphics accelerators, such example is included in <a href="#colorspace-conversion-example">colorspace conversion example</a> appendix. It is written in GLSL for fragment processor, see <a href="#graphics-subsystem">graphics subsystem</a> chapter for further description.</p>
 <p>There is a kernel module <code>v4l2loopback</code> which creates a video loop-back device, similar to network loop-back, allowing piping two video applications together. This is very useful not only for testing, but also for implementation of intermediate decoders. <a href="http://gstreamer.freedesktop.org">GStreamer</a> is a powerful multimedia framework widespread in Linux distributions, composed of a core infrastructure and hundreds of plug-ins. This command will create synthetic RGB4 video stream for the application, useful for testing</p>
 <p><code class="sourceCode bash"><span class="kw">modprobe</span> v4l2loopback</code><br /><code class="sourceCode bash"><span class="kw">gst-launch</span> videotestsrc pattern=solid-color foreground-color=0xE0F0E0 ! \</code><br /><code class="sourceCode bash"><span class="st">&quot;video/x-raw,format=RGBx,width=800,height=600,framerate=20/1&quot;</span> <span class="kw">\</span></code><br /><code>! v4l2sink device=/dev/video0</code></p>
 <p>Texas Instruments distributes a <a href="https://launchpad.net/~tiomap-dev/+archive/omap-trunk">meta package</a><span class="citation">[4]</span> for their OMAP platform featuring all required modules and DSP firmware. This includes kernel modules for <em>SysLink</em> inter-chip communication library, <em>Distributed Codec Engine</em> library and <em>ducati</em> plug-in for GStreamer. With the meta-package installed, it is very easy and efficient to implement mainstream encoded video formats. For example following command will create GStreamer pipeline to receive video payload over a network socket from an IP camera, decode it and push it to the loop-back device for the application. MPEG-4 AVC (H.264) decoder of the IVA 3 is used in this example.</p>
@@ -207,10 +212,10 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p>Cortex-A9 cores on the OMAP4460 also have the NEON co-processor, capable of vector floating point math. Although not very supported by the GCC C compiler, there are many assembly written libraries implementing coders with the NEON acceleration. For example the <a href="http://www.libjpeg-turbo.org/"><em>libjpeg-turbo</em></a> library is implementing the <em>libjpeg</em> interface. It is useful for USB cameras, as the USB throughput is not high enough for raw high definition video, but is sufficient with JPEG coding (as most USB cameras supports JPEG, but does not support H.264). 1080p JPEG stream decoded with this library via its GStreamer plug-in will consume about 90% of the single CPU core time (note that there are two CPU cores available). However, comparable to the AVC, JPEG encoding will cause visible quality degradation in the raw stream (video looks grainy).</p>
 <h2 id="graphics-subsystem"><a href="#graphics-subsystem">Graphics subsystem</a></h2>
 <blockquote>
-<p>Graphics stack, OpenGL ES 2.0 <span class="citation">[5]</span></p>
+<p>TODO: Graphics stack, OpenGL ES 2.0 <span class="citation">[5]</span></p>
 </blockquote>
 <h2 id="inertial-measurement-subsystem"><a href="#inertial-measurement-subsystem">Inertial measurement subsystem</a></h2>
-<p>Application needs to know its spatial orientation for rendering, there three devices which may provide such information, gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the <a href="#hardware">hardware</a> chapter.</p>
+<p>Application needs to know its spatial orientation for rendering, there are three devices which may provide such information, gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the <a href="#hardware">hardware</a> chapter.</p>
 <h3 id="industrial-io-module"><a href="#industrial-io-module">Industrial I/O module</a></h3>
 <p>A relatively young kernel module <code>iio</code> has been implemented in recent kernels to provide standardized support for sensors and analog converters typically connected by I<sup>2</sup>C bus. While many device drivers are still in staging tree, to core module is ready for production code. Subsystem provides device structure mapped in <code>sysfs</code>, typically available at <code>/sys/bus/iio/devices/</code>. Device are implemented usually on top of the <code>i2c-dev</code> driver and registered as <code>/sys/bus/iio/devices/iio:deviceX</code>, where X is the device number and the device name may be obtained by</p>
 <p><code class="sourceCode bash"><span class="kw">cat</span> /sys/bus/iio/devices/iio:deviceX/name</code></p>
@@ -281,11 +286,156 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p><span class="math">\(\mathbf{DCM}_{(t)}  =  W_{gyro}~ (\mathbf{R}_{gyro} \times \mathbf{DCM}_{(t-1)}) + (1 - W_{gyro}) \begin{bmatrix} \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \times \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \end{bmatrix}\)</span>,</p>
 <p>where <span class="math">\(\widehat{\mathbf{I}}_{xyz}\)</span> and <span class="math">\(\widehat{\mathbf{K}}_{xyz}\)</span> are calculated from magnetometer and accelerometer measurements. <em>W<sub>gyro</sub></em> is the weight of the gyroscope measurement, it must be estimated by trial and error to mitigate its drift but not add too much noise.</p>
 <h2 id="satellite-navigation-subsystem"><a href="#satellite-navigation-subsystem">Satellite navigation subsystem</a></h2>
-<blockquote>
-<p>TTY module, stty, socat, GPS <span class="citation">[7]</span>, NMEA 0183 <span class="citation">[8]</span></p>
-</blockquote>
+<h3 id="communication"><a href="#communication">Communication</a></h3>
+<p>Systems such GPS uses numerous satellites orbiting Earth transmitting their position and time. Receiver can measure its position and time with accuracy based on number of satellites in view. GPS receivers usually communicate via serial line, Linux kernel features TTY module originally used for teletypewriters. It handles serial lines, converters and virtual lines with devices generally called <code>/dev/tty*</code>. Serial connections (UART, RS-232) are usually named <code>/dev/ttySn</code>, where <code>n</code> is a device number. Emulated connection are named <code>/dev/ttyUSBn</code> for USB emulators or <code>/dev/ttyACMn</code> for modem emulators. There are also pseudo terminals in <code>/dev/pts/</code> used for software emulation. This devices allows standard I/O and may be controlled with functions defined in <code>termios.h</code> or by using <a href="http://linux.die.net/man/1/stty">stty(1)</a> utility. Important physical interface settings are</p>
+<ul>
+<li>baud rate</li>
+<li>parity</li>
+<li>flow control</li>
+</ul>
+<p>Usual settings are 4800 or 38 400 baud with no parity and no flow control, without proper interface configuration, no communication will occur Driver further provides line processing before passing data to the application. Important line settings are</p>
+<ul>
+<li>newline handling</li>
+<li>echo mode</li>
+<li>canonical mode</li>
+<li>timeouts and buffer sizes</li>
+</ul>
+<p>In canonical mode, driver uses line buffer and allows line editing. Buffer is passed to the application (made readable) after new line is encountered. It may be combined with echo mode, which will automatically send received characters back. This is how standard console line works, however if application needs to be in full control, driver may be switched to raw mode with per-character buffers and echo disabled. Also specific control characters for canonical mode may be configured.</p>
+<p>GPS receivers uses <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">NMEA 183 standard</a><span class="citation">[7]</span>. Communication is done in sentences, each message starts with dollar sign followed by source name and sentence type, then there is comma separated list of data fields optionally terminated by a checksum. Each sentence is appended with carriage return and new line. For example in sentence</p>
+<p><code class="sourceCode perl"><span class="dt">$GPGGA</span>,<span class="dv">000000</span>,<span class="fl">4914.266</span>,N,<span class="fl">01638.583</span>,E,<span class="dv">1</span>,<span class="dv">8</span>,<span class="dv">1</span>,<span class="dv">257</span>,M,<span class="fl">46.43</span>,M,,*<span class="dv">46</span></code></p>
+<p><code>GP</code> is source name (GPS receiver), <code>GGA</code> is sentence type (fix information), <code>*46</code> is a checksum and rest are data fields. Checksum is delimited by asterisk and consist of two character hexadecimal number calculated as bitwise XOR of all character between dollar and asterisk. Note that fields may be empty (as last two fields in the example) and numbers may have fractional parts.</p>
+<table>
+<caption>Important NMEA 0183 sentences</caption>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Description</th>
+<th align="left">Important information</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">GSA</td>
+<td align="left">Satellites (overall)</td>
+<td align="left">Visible satellites, dilution of precision</td>
+</tr>
+<tr class="even">
+<td align="left">GSV</td>
+<td align="left">Satellites (detailed)</td>
+<td align="left">Satellite number, elevation, azimuth (per satellite)</td>
+</tr>
+<tr class="odd">
+<td align="left">GGA</td>
+<td align="left">Fix information</td>
+<td align="left">Time, latitude, longitude, altitude, fix quality</td>
+</tr>
+<tr class="even">
+<td align="left">RMC</td>
+<td align="left">Position data</td>
+<td align="left">Time, latitude, longitude, speed, track</td>
+</tr>
+<tr class="odd">
+<td align="left">RMB</td>
+<td align="left">Navigation data</td>
+<td align="left">Destination, range, bearing</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>GSA</strong> sentence has following fields:</p>
+<ul>
+<li>1st field is <code>A</code> for automatic selection of 2D or 3D fix, <code>M</code> for manual</li>
+<li>2nd field is <code>3</code> for 3D fix, <code>2</code> for 2D fix or <code>1</code> for no fix</li>
+<li>3-14 fields are identification numbers (PRN) of satellites in view</li>
+<li>15-17 fields are dilution of precision and its horizontal and vertical parts</li>
+</ul>
+<p>The <strong>GSV</strong> sentence has following fields:</p>
+<ul>
+<li>1-2 fields are number of partial sentences and number of current part</li>
+<li>3rd field is number of satellites in view</li>
+<li>4th field is satellite number (PRN)</li>
+<li>5th field is satellite elevation</li>
+<li>6th field is satellite azimuth</li>
+<li>7th field is satellite signal to noise ratio in decibels</li>
+<li>8-11, 12-15, 16-19 fields are for other satellites info (number, elevation, azimuth, SNR)</li>
+</ul>
+<p>The <strong>GGA</strong> sentence has following fields:</p>
+<ul>
+<li>1st field resembles time of the fix in format <code>hhmmss.ff</code>, where <code>hh</code> are hours, <code>mm</code> are minutes, <code>ss</code> are seconds and <code>ff</code> are fractional seconds.</li>
+<li>2-3 fields resembles device latitude in format <code>ddmm.ff,[NS]</code>, where <code>dd</code> are degrees, <code>mm</code> are minutes, <code>ff</code> are fractional minutes, <code>N</code> means north hemisphere and <code>S</code> means south.</li>
+<li>4-5 fields resembles device longitude in format <code>dddmm.ff,[EW]</code>, where <code>E</code> means east of Greenwich and <code>W</code> means west.</li>
+<li>6th field is fix type, 1 means GPS fix</li>
+<li>7th field is number of satellites in view</li>
+<li>8th field is horizontal dilution of precision</li>
+<li>9-10 fields resembles device altitude above mean sea level, first field is the value and second field is the unit used</li>
+<li>11-12 fields resembles height of geoid above WGS84 in the same fashion</li>
+<li>13-14 fields are usually unused and refers to differential GPS</li>
+</ul>
+<p>The <strong>RMC</strong> sentence has following fields:</p>
+<ul>
+<li>1-5 fields are same as in GGA sentence</li>
+<li>6th field is speed over the ground in knots</li>
+<li>7th field is track angle in degrees</li>
+<li>8th field resembles date in format <code>ddmmyy</code>, where <code>dd</code> is day, <code>mm</code> is month and <code>yy</code> is last two digits of year</li>
+<li>9-10 fields resembles magnetic variation, first field is value in degrees, second field is <code>E</code> meaning east or <code>W</code> meaning west</li>
+</ul>
+<p>The <strong>RMB</strong> sentence has following fields:</p>
+<ul>
+<li>1st field is status, <code>A</code> means OK</li>
+<li>2-3 fields resembles cross-track error, first field is the value in nautical miles, second field is <code>E</code> meaning east or <code>W</code> meaning west</li>
+<li>4th field is origin waypoint name</li>
+<li>5th field is destination waypoint name</li>
+<li>6-9 fields are destination waypoint latitude and longitude with same formatting as in GGA sentence</li>
+<li>10th field is range to destination in nautical miles</li>
+<li>11th field is bearing to destination in degrees</li>
+<li>12th field is velocity towards destination in knots</li>
+<li>13th field is <code>A</code> for arrived or <code>V</code> for not arrived to destination</li>
+</ul>
+<h3 id="navigation"><a href="#navigation">Navigation</a></h3>
+<p>As Earth shape is very complex, there are two layers of approximation used for computing position. Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water. Most recent geoid model is EGM96 which is used together with <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">WGS84 reference ellipsoid</a><span class="citation">[8]</span>. This ellipsoid has semi-major axis of <span class="math">\(a = 6378137\)</span> meters and flattening <span class="math">\(f = 1/298.257223563\)</span>. Note that ellipsoid flattening is defined as</p>
+<p><span class="math">\(f = \dfrac{a - b}{a}\)</span>,</p>
+<p>where <em>b</em> is the semi-minor axis. The eccentricity is defined as</p>
+<p><span class="math">\(e = 2f - f^2\)</span>.</p>
+<p>Geodetic latitude <span class="math">\(\varphi\)</span> is the angle between normal to the reference ellipsoid and the equator, longitude <span class="math">\(\lambda\)</span> is the angle between normal to the reference ellipsoid and the prime meridian. Because of the flattening, the normal does not intersect ellipsoid center. Geocentric latitude <span class="math">\(\psi\)</span> uses line running through the center instead of the normal,</p>
+<p><span class="math">\(\psi = \arctan [ (1-e)^2 \tan(\varphi)]\)</span>.</p>
+<p>Device position measured by GPS is defined by its geodetic latitude, longitude and altitude</p>
+<p><span class="math">\(h_{AMSL} = h_{WGS84} - h_{EGM96}\)</span></p>
+<p>measured as height above mean see level, where <span class="math">\(h_{WGS84}\)</span> is the height above reference ellipsoid and <span class="math">\(h_{EGM96}\)</span> is the height above geoid. As GPS sensors usually send fix information at low rates, position needs to be interpolated between fixes. If current ground speed <span class="math">\(v_{GND}\)</span> and course <span class="math">\(\alpha_{TRK}\)</span> are known, the interpolated position in next step will be</p>
+<p><span class="math">\(\varphi_{(t+1)} = \varphi_{(t)} + \dfrac{\cos(\alpha_{TRK}) \cdot v_{GND} \cdot _\Delta t}{R_{(\varphi)}}\)</span>,</p>
+<p><span class="math">\(\lambda_{(t+1)} = \lambda_{(t)} + \dfrac{\sin(\alpha_{TRK}) \cdot v_{GND} \cdot _\Delta t}{R_{(\varphi)} \cdot \cos(\varphi)}\)</span>,</p>
+<p>where <em>R</em> is the ellipsoid radius at given latitude</p>
+<p><span class="math">\(R = \dfrac{\sqrt{b^4 \sin(\varphi)^2 + a^4 \cos(\varphi)^2}}{\sqrt{b^2 \sin(\varphi)^2 + a^2 \cos(\varphi)^2}}\)</span>.</p>
+<p>Application needs to know projections of specific landmarks as normalized horizontal and vertical coordinates (in range of -1 to 1) used for rendering</p>
+<p><span class="math">\(\begin{bmatrix} x \cdot FOV_x \\ y \cdot FOV_y \end{bmatrix} =  \begin{bmatrix} \alpha_{proj} - \alpha_{dev} \\ \beta_{proj} - \beta_{dev} \end{bmatrix} \times \begin{bmatrix} \cos(\gamma_{dev}) &amp; -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) &amp; \cos(\gamma_{dev})  \end{bmatrix} \)</span>,</p>
+<p>where <em>FOV</em> is the field of view, <em>dev</em> means device angle (calculated by <a href="#inertial-measurement-subsystem">inertial subsystem</a>) and <em>proj</em> means projection angle (defined later on in this section). Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center. However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface, connecting two points with shortest route. <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html">Spherical trigonometry</a><span class="citation">[9]</span> defines basis for orthodrome calculations. Heading changes along the route and its initial value is the horizontal projection angle</p>
+<p><span class="math">\(\alpha_{proj} = \arctan \left ( \dfrac{\sin(\lambda - \lambda_0) \cos(\varphi)} {\cos(\varphi_0) \sin(\varphi) - \sin(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0)} \right )\)</span>,</p>
+<p>the zero index refers to the device coordinate. Angular distance between those two points is</p>
+<p><span class="math">\(\phi = \arccos(\sin(\varphi_0) \sin(\varphi) + \cos(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0))\)</span>.</p>
+<p>Vertical projection angle is the angle between the horizon (perpendicular to normal) and a line directly connecting the points. Lets construct a triangle connecting the points with the center of the reference ellipsoid, assuming zero flattening, so the normals have intersection in the center (<span class="math">\(f = 0 \rightarrow e = 0 \rightarrow \psi = \varphi\)</span>).</p>
+<p><span class="math">\(a_\Delta = h_0 + R_{(\varphi_0)}\)</span>,</p>
+<p><span class="math">\(b_\Delta = h + R_{(\varphi)}\)</span>,</p>
+<p><span class="math">\(c_\Delta = \sqrt{a_\Delta^2 + b_\Delta^2 - 2 a_\Delta b_\Delta \cos(\phi)}\)</span>,</p>
+<p><span class="math">\(\beta_{proj} = \arcsin \left ( \dfrac{b_\Delta}{c_\Delta} \sin(\phi) \right ) - \frac{\pi}{2}\)</span>,</p>
+<p>where <em>h</em> is height above reference ellipsoid. These calculations are quite complex and there is plenty of room for approximation. Over short distance, such as typical in visual ranges, orthodromes may be replaced with loxodromes (rhumb lines). Loxodrome is a curve following Earth surface, connecting two points with constant heading. It has similar path to orthodrome, if the points are relatively far from poles a close together. Simplified heading along the line is</p>
+<p><span class="math">\(\alpha_{proj} \doteq \arctan \left ( \dfrac{\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0)}{\varphi - \varphi_0} \right )\)</span>.</p>
+<p>Note that loxodrome approximation will fail horribly near poles as the curve will run circles around the pole. Angular distance along loxodrome is</p>
+<p><span class="math">\(\phi \doteq \sqrt{(\varphi - \varphi_0)^2 + (\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0))^2}\)</span></p>
+<p>and a horizontal distance along the arc between those points is</p>
+<p><span class="math">\(d = \phi \cdot R_{(\varphi_0)}\)</span>,</p>
+<p>assuming flattening difference is close to zero, so <em>R</em> is constant along the curve. With the approximation of local flat Earth surface perpendicular to the normal, the simplified vertical projection angle is</p>
+<p><span class="math">\(\beta_{proj} \doteq \arctan \left ( \dfrac{h - h_0}{d} \right )\)</span>.</p>
+<p>This approximation will fail at higher altitudes when the visibility range is high enough to make the Earth curvature observable.</p>
+<h2 id="output-creation"><a href="#output-creation">Output creation</a></h2>
+<p>The <a href="#output-image-example">output image example</a> appendix shows the actual output image. In the top left corner is the current speed over ground as reported by the satellite navigation, while in the top right corner is the current altitude above mean sea level. Speed is displayed in kilometers per hour and the altitude in meters. In the top center is the current waypoint name and distance in kilometers, if provided by the NMEA 0183 navigation data sentence (RMB). There is a heading ruler in the bottom, it is scaled by camera field of view and oriented to current heading. Course to any visible object may be deducted directly from the ruler. There are two markers, the arrow marker point to current track angle as reported by the satellite navigation. The circle marker is the course to current waypoint if any. The dashed horizontal line in the center of the image is the horizon line, it follows the horizon as calculated by inertial subsystem by moving up or down and rotating around its center. Orientation is determined by the marginal markers, they points always to the ground. If the horizon is not visible, dashed arrow is shown instead pointing up or down to where the horizon is hidden. Application accepts database of landmarks, following file was used in this example:</p>
+<pre class="sourceCode python"><code class="sourceCode python"><span class="co"># Encoding ISO/IEC 8859-1</span>
+<span class="co"># Test landmarks (lat[rad], lon[rad], alt[m], name)</span>
+<span class="fl">25e-5</span>, <span class="fl">1e-5</span>, <span class="dv">0</span>, testA
+<span class="fl">50e-5</span>, -<span class="fl">1e-5</span>, <span class="dv">100</span>, testB</code></pre>
+<p>The <code>testA</code> landmark label is visible in the image, its location is centered directly above its projection. Projections are calculated in conjunction of both navigation subsystems and graphic acceleration. Large landmark database may be supplemented to provide spatial navigation references, only visible landmarks will be shown. This overlay is rendered in real time over the source video (there is none in the example), all rendering and data gathering methods are provided by the respective subsystems. Upon correct configuration, overlay elements (ruler, horizon and labels) should be aligned with the real visible places in the video frame. System allows free six degrees of freedom movement of the camera while still being able to render the overlay correctly. Waypoint management and route planning is done solely by the external navigation system, it is expected that it will provide its own user interface. This allows connection for example to PDAs or other specialized devices which delivers classic 2D moving map navigation to the user with its own controls.</p>
 <h1 id="hardware"><a href="#hardware">Hardware</a></h1>
-<p><strong><a href="http://www.ti.com/product/omap4460">OMAP4460</a> application processor</strong><span class="citation">[9]</span></p>
+<blockquote>
+<p>TODO: Hardware description</p>
+</blockquote>
+<p><strong><a href="http://www.ti.com/product/omap4460">OMAP4460</a> application processor</strong><span class="citation">[10]</span></p>
 <ul>
 <li>two ARM Cortex-A9 SMP general-purpose processors</li>
 <li>IVA 3 video accelerator, 1080p capable</li>
@@ -293,7 +443,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li>SGX540 3D graphics accelerator, OpenGL ES 2.0 compatible</li>
 <li>HDMI v1.3 video output</li>
 </ul>
-<p><strong><a href="http://www.invensense.com/mems/gyro/mpu9150.html">MPU-9150</a> motion tracking device</strong><span class="citation">[10]</span></p>
+<p><strong><a href="http://www.invensense.com/mems/gyro/mpu9150.html">MPU-9150</a> motion tracking device</strong><span class="citation">[11]</span></p>
 <ul>
 <li>embedded MPU-6050 3-axis gyroscope and accelerometer</li>
 <li>embedded AK8975 3-axis digital compass</li>
@@ -306,9 +456,9 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </ul>
 <h1 id="conclusion"><a href="#conclusion">Conclusion</a></h1>
 <blockquote>
-<p>Conclusion</p>
+<p>TODO: Conclusion</p>
 </blockquote>
-<h1 id="appendixa"><a href="#appendixa">Threads example</a></h1>
+<h1 id="threads-example"><a href="#threads-example">Threads example</a></h1>
 <p>In this example two threads share standard input and output, access is restricted by <em>mutex</em> so only one thread may use the shared resource at any time.</p>
 <table class="sourceCode c numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
 2
@@ -386,7 +536,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
     pthread_mutex_destroy(&amp;mutex);
     <span class="kw">return</span> <span class="dv">0</span>;
 }</code></pre></td></tr></table>
-<h1 id="appendixb"><a href="#appendixb">Video capture example</a></h1>
+<h1 id="video-capture-example"><a href="#video-capture-example">Video capture example</a></h1>
 <p>In this example video device is configured to capture frames using memory mapping. These frames are dumped to standard output, instead of further processing.</p>
 <table class="sourceCode c numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
 2
@@ -554,7 +704,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 }</code></pre></td></tr></table>
 <!-- -->
 
-<h1 id="appendixc"><a href="#appendixc">Colorspace conversion example</a></h1>
+<h1 id="colorspace-conversion-example"><a href="#colorspace-conversion-example">Colorspace conversion example</a></h1>
 <p>In this example RGB to YUV color-space conversion is implemented in fragment shader. Each input channel has its own texturing unit, texture coordinates are divided by sub-sampling factor 4:2:0.</p>
 <table class="sourceCode c numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
 2
@@ -586,18 +736,26 @@ varying vec2 texCoord;
         y + <span class="fl">2.0172</span> * u,
         <span class="fl">1.0</span>);
 }</code></pre></td></tr></table>
+<h1 id="output-image-example"><a href="#output-image-example">Output image example</a></h1>
+<p>This is the actual graphical output rendered by the application, there is no video source (solid white background).</p>
+<div class="figure">
+<img src="images/output.png" alt="Visible output" /><p class="caption">Visible output</p>
+</div>
+<h1 id="references" class="unnumbered"><a href="#references">References</a></h1>
+<!-- -->
+
 <div class="references">
-<h1><a href="#references">References</a></h1>
 <p>[1] BIMBER, Oliver and RASKAR, Ramesh. <em>Spatial augmented reality: merging real and virtual worlds</em>. Wellesley: A K Peters, 2005. ISBN 15-688-1230-2. </p>
 <p>[2] LinuxTV Developers. Linux Media Infrastructure API. [online]. 2012. [Accessed 20 November 2013]. Available from: <a href="http://linuxtv.org/downloads/v4l-dvb-apis" title="http://linuxtv.org/downloads/v4l-dvb-apis">http://linuxtv.org/downloads/v4l-dvb-apis</a></p>
 <p>[3] Consultative Committee on International Radio. Recommendation BT.601. [online]. 2011. [Accessed 20 November 2013]. Available from: <a href="http://www.itu.int/rec/R-REC-BT.601/en" title="http://www.itu.int/rec/R-REC-BT.601/en">http://www.itu.int/rec/R-REC-BT.601/en</a></p>
 <p>[4] TI OMAP Developers. TI OMAP Trunk PPA. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="https://launchpad.net/~tiomap-dev/+archive/omap-trunk" title="https://launchpad.net/~tiomap-dev/+archive/omap-trunk">https://launchpad.net/~tiomap-dev/+archive/omap-trunk</a></p>
 <p>[5] Khronos Group. OpenGL ES 2.x - for Programmable Hardware. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.khronos.org/opengles/2_X" title="http://www.khronos.org/opengles/2_X">http://www.khronos.org/opengles/2_X</a></p>
 <p>[6] JAZAR, Reza N. <em>Theory of applied robotics: kinematics, dynamics, and control</em>. 2nd ed. New York: Springer, 2010. ISBN 978-1-4419-1749-2. </p>
-<p>[7] KENNEDY, Melita. <em>Understanding map projections</em>. Redlands: ESRI, 2000. ISBN 15-894-8003-1. </p>
-<p>[8] National Marine Electronics Association. NMEA 0183. [online]. 2008. [Accessed 20 November 2013]. Available from: <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp" title="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp</a></p>
-<p>[9] Texas Instruments. OMAP 4460 Multimedia Device. [online]. 2012. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/product/omap4460" title="http://www.ti.com/product/omap4460">http://www.ti.com/product/omap4460</a></p>
-<p>[10] InvenSense. MPU-9150 Nine-axis MEMS MotionTracking™ Device. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.invensense.com/mems/gyro/mpu9150.html" title="http://www.invensense.com/mems/gyro/mpu9150.html">http://www.invensense.com/mems/gyro/mpu9150.html</a></p>
+<p>[7] National Marine Electronics Association. NMEA 0183. [online]. 2008. [Accessed 20 November 2013]. Available from: <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp" title="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp</a></p>
+<p>[8] NIMA. Department of Defense World Geodetic System 1984. [online]. 1997. [Accessed 20 November 2013]. Available from: <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf" title="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf</a></p>
+<p>[9] WEISSTEIN, Eric W. <em>Spherical trigonometry</em> [online]. MathWorld. [Accessed 20 November 2013]. Available from: <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html" title="http://mathworld.wolfram.com/SphericalTrigonometry.html">http://mathworld.wolfram.com/SphericalTrigonometry.html</a></p>
+<p>[10] Texas Instruments. OMAP 4460 Multimedia Device. [online]. 2012. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/product/omap4460" title="http://www.ti.com/product/omap4460">http://www.ti.com/product/omap4460</a></p>
+<p>[11] InvenSense. MPU-9150 Nine-axis MEMS MotionTracking™ Device. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.invensense.com/mems/gyro/mpu9150.html" title="http://www.invensense.com/mems/gyro/mpu9150.html">http://www.invensense.com/mems/gyro/mpu9150.html</a></p>
 </div>
 </body>
 </html>
