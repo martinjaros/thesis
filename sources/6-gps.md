@@ -107,11 +107,24 @@ The **RMB** sentence has following fields:
 
 As Earth shape is very complex, there are two layers of approximation used for computing position.
 Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water.
-Most recent geoid model is EGM96 which is used together with WGS84 reference ellipsoid.
+Most recent geoid model is EGM96 which is used together with [WGS84 reference ellipsoid][wgs84][@WGS84].
 This ellipsoid has semi-major axis of $a = 6378137$ meters and flattening $f = 1/298.257223563$.
-Geodetic latitude is the angle between normal to the reference ellipsoid and the equator.
-Geodetic longitude is the angle between normal to the reference ellipsoid and the prime meridian.
-Device position measured by GPS is defined by its latitude $\varphi_0$, longitude $\lambda_0$ and altitude
+Note that ellipsoid flattening is defined as
+
+$f = \dfrac{a - b}{a}$,
+
+where *b* is the semi-minor axis. The eccentricity is defined as
+
+$e = 2f - f^2$.
+
+Geodetic latitude $\varphi$ is the angle between normal to the reference ellipsoid and the equator,
+longitude $\lambda$ is the angle between normal to the reference ellipsoid and the prime meridian.
+Because of the flattening, the normal does not intersect ellipsoid center.
+Geocentric latitude $\psi$ uses line running through the center instead of the normal,
+
+$\psi = \arctan [ (1-e)^2 \tan(\varphi)]$.
+
+Device position measured by GPS is defined by its geodetic latitude, longitude and altitude
 
 $h_{AMSL} = h_{WGS84} - h_{EGM96}$
 
@@ -128,10 +141,6 @@ where *R* is the ellipsoid radius at given latitude
 
 $R = \dfrac{\sqrt{b^4 \sin(\varphi)^2 + a^4 \cos(\varphi)^2}}{\sqrt{b^2 \sin(\varphi)^2 + a^2 \cos(\varphi)^2}}$.
 
-Note that ellipsoid flattening is defined as
-
-$f = \dfrac{a - b}{a}$
-
 Application needs to know projections of specific landmarks as normalized horizontal and
 vertical coordinates (in range of -1 to 1) used for rendering
 
@@ -142,30 +151,53 @@ $,
 
 where *FOV* is the field of view, *dev* means device angle (calculated by [inertial subsystem](#inertial-measurement-subsystem)) and
 *proj* means projection angle (defined later on in this section).
-See [Graphics subsystem](#graphics-subsystem) chapter for more details on projections.
-
 Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center.
-It is an approximation for a line following Earth surface, connecting two points with shortest route.
+However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface,
+connecting two points with shortest route. [Spherical trigonometry][sphtrig][@SphTrig] defines basis for orthodrome calculations.
 Heading changes along the route and its initial value is the horizontal projection angle
 
 $\alpha_{proj} = \arctan \left ( \dfrac{\sin(\lambda - \lambda_0) \cos(\varphi)}
-{\cos(\varphi_0) \sin(\varphi) - \sin(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0)} \right )$.
+{\cos(\varphi_0) \sin(\varphi) - \sin(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0)} \right )$,
 
-Angular distance between those two points is
+the zero index refers to the device coordinate. Angular distance between those two points is
 
 $\phi = \arccos(\sin(\varphi_0) \sin(\varphi) + \cos(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0))$.
 
 Vertical projection angle is the angle between the horizon (perpendicular to normal) and
 a line directly connecting the points.
-Lets construct a triangle connecting the points with the center of the reference ellipsoid
+Lets construct a triangle connecting the points with the center of the reference ellipsoid,
+assuming zero flattening, so the normals have intersection in the center ($f = 0 \rightarrow e = 0 \rightarrow \psi = \varphi$).
 
-$a = h_0 + R_{(\varphi_0)}$,
+$a_\Delta = h_0 + R_{(\varphi_0)}$,
 
-$b = h + R_{(\varphi)}$,
+$b_\Delta = h + R_{(\varphi)}$,
 
-$c = \sqrt{a^2 + b^2 - 2 a b \cos(\phi)}$,
+$c_\Delta = \sqrt{a_\Delta^2 + b_\Delta^2 - 2 a_\Delta b_\Delta \cos(\phi)}$,
 
-$\beta_{proj} = \arcsin \left ( \dfrac{b}{c} \sin(\phi) \right ) - \frac{\pi}{2}$,
+$\beta_{proj} = \arcsin \left ( \dfrac{b_\Delta}{c_\Delta} \sin(\phi) \right ) - \frac{\pi}{2}$,
 
 where *h* is height above reference ellipsoid.
+These calculations are quite complex and there is plenty of room for approximation.
+Over short distance, such as typical in visual ranges, orthodromes may be replaced with loxodromes (rhumb lines).
+Loxodrome is a curve following Earth surface, connecting two points with constant heading.
+It has similar path to orthodrome, if the points are relatively far from poles a close together.
+Simplified heading along the line is
+
+$\alpha_{proj} \doteq \arctan \left ( \dfrac{\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0)}{\varphi - \varphi_0} \right )$.
+
+Note that loxodrome approximation will fail horribly near poles as the curve will run circles around the pole.
+Angular distance along loxodrome is
+
+$\phi \doteq \sqrt{(\varphi - \varphi_0)^2 + (\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0))^2}$
+
+and a horizontal distance along the arc between those points is
+
+$d = \phi \cdot R_{(\varphi_0)}$,
+
+assuming flattening difference is close to zero, so *R* is constant along the curve.
+With the approximation of local flat Earth surface perpendicular to the normal, the simplified vertical projection angle is
+
+$\beta_{proj} \doteq \arctan \left ( \dfrac{h - h_0}{d} \right )$.
+
+This approximation will fail at higher altitudes when the visibility range is high enough to make the Earth curvature observable.
 

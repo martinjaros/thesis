@@ -33,4 +33,6 @@
 [stty]:            http://linux.die.net/man/1/stty
 [socat]:           http://linux.die.net/man/1/socat
 [nmea0183]:        http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp
+[sphtrig]:         http://mathworld.wolfram.com/SphericalTrigonometry.html
+[wgs84]:           http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf
 
