@@ -40,8 +40,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.5242678"
-     inkscape:cx="92.075837"
-     inkscape:cy="93.352972"
+     inkscape:cx="225.21494"
+     inkscape:cy="83.803544"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -49,8 +49,8 @@
      inkscape:bbox-nodes="true"
      inkscape:snap-bbox-midpoints="true"
      inkscape:snap-bbox-edge-midpoints="true"
-     inkscape:window-width="1280"
-     inkscape:window-height="750"
+     inkscape:window-width="1920"
+     inkscape:window-height="1030"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -86,19 +86,32 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(4.375e-7,-802.36212)">
-    <flowRoot
+    <text
        xml:space="preserve"
-       id="flowRoot2985"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
-       transform="translate(-28.672852,-204.76156)"><flowRegion
-         id="flowRegion2987"><rect
-           id="rect2989"
-           width="91.785713"
-           height="55.714287"
-           x="9.2857141"
-           y="1006.6479" /></flowRegion><flowPara
-         id="flowPara2991">OpenGL ES</flowPara><flowPara
-         id="flowPara2997">API</flowPara></flowRoot>    <text
+       x="26.499023"
+       y="814.86237"
+       id="text3031"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="26.499023"
+         y="814.86237"
+         id="tspan3033"><tspan
+           x="26.499023"
+           y="814.86237"
+           id="tspan3035">OpenGL ES</tspan><tspan
+           dx="0"
+           x="80.639648"
+           y="814.86237"
+           id="tspan3037" /></tspan><tspan
+         sodipodi:role="line"
+         x="44.545898"
+         y="827.3623"
+         id="tspan3039"><tspan
+           x="44.545898"
+           y="827.3623"
+           id="tspan3041">API</tspan></tspan></text>
+    <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
        x="150.354"

@@ -44,7 +44,12 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li><a href="#application">Application</a><ul>
 <li><a href="#linux-kernel">Linux kernel</a></li>
 <li><a href="#video-subsystem">Video subsystem</a></li>
-<li><a href="#graphics-subsystem">Graphics subsystem</a></li>
+<li><a href="#graphics-subsystem">Graphics subsystem</a><ul>
+<li><a href="#opengl-es-2.0-api">OpenGL ES 2.0 API</a></li>
+<li><a href="#opengl-es-shading-language">OpenGL ES Shading Language</a></li>
+<li><a href="#truetype-font-rendering">TrueType font rendering</a></li>
+<li><a href="#texture-streaming-extensions">Texture streaming extensions</a></li>
+</ul></li>
 <li><a href="#inertial-measurement-subsystem">Inertial measurement subsystem</a><ul>
 <li><a href="#industrial-io-module">Industrial I/O module</a></li>
 <li><a href="#dcm-algorithm">DCM algorithm</a></li>
@@ -211,9 +216,284 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p>On OMAP4460 this would consume only about 15% of the CPU time as the decoding is done by the IVA 3 video accelerator in parallel to the CPU which only passes pointers around and handles synchronization. Output format is NV12 which is similar to YU12 format described earlier, but there is only one chroma plane with two-byte samples, first byte being the U channel and the second byte the V channel, sampling is same 4:2:0. The YUV to RGB color space conversion must take place here, preferably implemented on the GPU as described above.</p>
 <p>Cortex-A9 cores on the OMAP4460 also have the NEON co-processor, capable of vector floating point math. Although not very supported by the GCC C compiler, there are many assembly written libraries implementing coders with the NEON acceleration. For example the <a href="http://www.libjpeg-turbo.org/"><em>libjpeg-turbo</em></a> library is implementing the <em>libjpeg</em> interface. It is useful for USB cameras, as the USB throughput is not high enough for raw high definition video, but is sufficient with JPEG coding (as most USB cameras supports JPEG, but does not support H.264). 1080p JPEG stream decoded with this library via its GStreamer plug-in will consume about 90% of the single CPU core time (note that there are two CPU cores available). However, comparable to the AVC, JPEG encoding will cause visible quality degradation in the raw stream (video looks grainy).</p>
 <h2 id="graphics-subsystem"><a href="#graphics-subsystem">Graphics subsystem</a></h2>
-<blockquote>
-<p>TODO: Graphics stack, OpenGL ES 2.0 <span class="citation">[5]</span></p>
-</blockquote>
+<p>Graphical output in the Linux Kernel is accessible as a framebuffer device <code>/dev/fb</code>. This allows directly writing to a display memory from the application. OMAP platform further extends this interface to support its DSS2 architecture for multiplexing graphical and video systems with display outputs. There is a framebuffer device connected to the PowerVR SGX graphical accelerator with control interface at <code>/sys/class/graphics/fbX</code>, where <code>X</code> is the framebuffer number. The OMAP DSS subsystem is exported at <code>/sys/devices/platform/omapdss</code> as</p>
+<ul>
+<li><code>/sys/devices/platform/omapdss/overlayX/</code></li>
+<li><code>/sys/devices/platform/omapdss/managerX/</code></li>
+<li><code>/sys/devices/platform/omapdss/displayX/</code></li>
+</ul>
+<p>where overlays may read from FB or V4L2 devices, combined in the manager and then linked to a physical display. Input sources can be blended by color keying to create the output image, this is useful for rendering graphical overlays. Individual displays (HDMI, LCD) are also configured by this interface.</p>
+<h3 id="opengl-es-2.0-api"><a href="#opengl-es-2.0-api">OpenGL ES 2.0 API</a></h3>
+<p>There is a standardized library for interfacing with graphical accelerators maintained by Khronos group called OpenGL. Its recent version targeted for embedded systems is <a href="http://www.khronos.org/opengles/2_X">OpenGL ES 2.0</a> <span class="citation">[5]</span> <span class="citation">[6]</span>, implemented by majority of hardware developers. It is also supported by the multi-platform Mesa3D library, so it will run also on desktop computer, either emulated by CPU or partially accelerated depending on available hardware. OpenGL ES 2.0 is implemented in two parts, the kernel module and user-space libraries <em>EGL</em> and <em>GLESv2</em>. Its implementation will be platform specific, however the application interface is the same. Functions names in the API are prefixed with <em>gl</em> and suffixed by argument types, used for overloading. EGL library is used for initialization of the OpenGL context, following function are available in the API:</p>
+<table>
+<caption>EGL function for OpenGL ES initialization</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Function</strong></th>
+<th align="left"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>eglGetDisplay()</code></td>
+<td align="left">Select display</td>
+</tr>
+<tr class="even">
+<td align="left"><code>eglInitialize()</code></td>
+<td align="left">Initialize display</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>eglBindAPI()</code></td>
+<td align="left">Select OpenGL API version</td>
+</tr>
+<tr class="even">
+<td align="left"><code>eglChooseConfig()</code></td>
+<td align="left">Select configuration options</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>eglCreateWindowSurface()</code></td>
+<td align="left">Create drawable surface (bound to native window)</td>
+</tr>
+<tr class="even">
+<td align="left"><code>eglCreateContext()</code></td>
+<td align="left">Create OpenGL context</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>eglMakeCurrent()</code></td>
+<td align="left">Activate context and surface</td>
+</tr>
+</tbody>
+</table>
+<p>Graphical pipeline is programmable, the program runs on the GPU, while OpenGL API is used for communication with the application running on CPU.</p>
+<div class="figure">
+<img src="images/pipeline.svg" alt="OpenGL ES pipeline" /><p class="caption">OpenGL ES pipeline</p>
+</div>
+<p>Programs are compiled from source and written in the GLSL language, each program consists of vertex and fragment shader. Following function are available in the API:</p>
+<table>
+<caption>OpenGL functions for working with shader programs</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Function</strong></th>
+<th align="left"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>glCreateShader()</code></td>
+<td align="left">Create shader</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glShaderSource()</code></td>
+<td align="left">Load shader source</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glCompileShader()</code></td>
+<td align="left">Compile shader from loaded source</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glDeleteShader()</code></td>
+<td align="left">Delete shader</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glShaderBinary()</code></td>
+<td align="left">Load shader from binary data</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glCreateProgram()</code></td>
+<td align="left">Create program</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glAttachShader()</code></td>
+<td align="left">Add shader to program</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glLinkProgram()</code></td>
+<td align="left">Link shaders in program</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glUseProgram()</code></td>
+<td align="left">Switch between multiple programs</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glDeleteProgram()</code></td>
+<td align="left">Delete program</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glGetUniformLocation()</code></td>
+<td align="left">Access uniform variable defined in shader</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glGetAttribLocation()</code></td>
+<td align="left">Access attribute variable defined in shader</td>
+</tr>
+</tbody>
+</table>
+<p>The vertex shader processes geometry defined as array of verticies, it is executed per vertex. Result verticies are rasterized into fragments and then fragment shader is executed per fragment. Result fragments are then written into the framebuffer, each shader execution is done in parallel.</p>
+<div class="figure">
+<img src="images/shaders.svg" alt="OpenGL ES shader" /><p class="caption">OpenGL ES shader</p>
+</div>
+<p>GPU uses its own memory, it may be physically shared with the system memory, but is not directly accessible by the application. Verticies are stored in the GPU memory in vertex buffer objects (VBO), following API function are available:</p>
+<table>
+<caption>OpenGL functions for working with VBOs</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Function</strong></th>
+<th align="left"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>glGenBuffers()</code></td>
+<td align="left">Create vertex buffer object</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glDeleteBuffers()</code></td>
+<td align="left">Destroy vertex buffer object</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glBufferData()</code></td>
+<td align="left">Load vertex data into VBO</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glBindBuffer()</code></td>
+<td align="left">Bind VBO to attribute array</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glVertexAttribPointer()</code></td>
+<td align="left">Specify attribute array</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glEnableVertexAttribArray()</code></td>
+<td align="left">Enable attribute array</td>
+</tr>
+</tbody>
+</table>
+<p>Shader programs have three types of variables, attributes, uniforms and varyings. Attributes are read from the attribute array which is bound to the VBO. Each vertex from the array is processed separately by each shader execution, having its value accessible by the attribute variables. Uniforms can be assigned directly by the application using <code>glUniform()</code>, they are read-only by the shader and they are shared by each execution. Varyings are used to pass variables from vertex shader to fragment shader, they are interpolated between verticies during the rasterization. Fragment shaders may use textures to to calculate fragment color, textures are stored in the GPU memory and loaded by the application. Following functions are available in the API: </p>
+<table>
+<caption>OpenGL functions for working with textures</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Function</strong></th>
+<th align="left"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>glGenTextures()</code></td>
+<td align="left">Create texture object</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glTexImage2D()</code></td>
+<td align="left">Load pixel data into texture object</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glTexSubImage2D()</code></td>
+<td align="left">Load partial pixel data</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glTexParameter()</code></td>
+<td align="left">Set parameter</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glBindTexture()</code></td>
+<td align="left">Bind texture to active unit</td>
+</tr>
+<tr class="even">
+<td align="left"><code>glActiveTexture()</code></td>
+<td align="left">Select texture unit</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>glDeleteTextures()</code></td>
+<td align="left">Delete texture</td>
+</tr>
+</tbody>
+</table>
+<p>Textures are bound to the texture units which may be accessed from the shader program. If the fragment shader needs to work with multiple textures, each texture needs to be loaded into a different texturing unit. The typical drawing loop is:</p>
+<ul>
+<li>select shader program</li>
+<li>assign uniform variables</li>
+<li>bind textures to texturing units</li>
+<li>bind VBOs to attribute arrays</li>
+<li>start processing with <code>glDrawArrays()</code></li>
+<li>swap framebuffers and repeat</li>
+</ul>
+<h3 id="opengl-es-shading-language"><a href="#opengl-es-shading-language">OpenGL ES Shading Language</a></h3>
+<p>Shader programs are designed to be executed in parallel, over large blocks of data. The language is similar to C, the minimal structure of the vertex shader is:</p>
+<pre class="sourceCode c"><code class="sourceCode c">attribute vec4 vertex;
+varying vec2 texcoord;
+
+<span class="dt">void</span> main()
+{
+  gl_Position = vec4(vertex.xy, <span class="dv">0</span>, <span class="dv">1</span>);
+  texcoord = vertex.zw;
+}</code></pre>
+<p>and the fragment shader:</p>
+<pre class="sourceCode c"><code class="sourceCode c">uniform sampler2D texture;
+varying vec2 texcoord;
+
+<span class="dt">void</span> main()
+{
+  gl_FragColor = texture2D(texture, texcoord);
+}</code></pre>
+<p>This vertex shader takes one vertex attribute as a vector, where first two fields are display coordinates and the second two fields are texture coordinates. It defines varying variable to pass texture coordinates to the fragment shader. The <code>gl_Position</code> is special variable resembling the output of the vertex shader. The fragment shader access texturing unit passed as a uniform variable with the interpolated texture coordinates from the vertex shader. Result is written to <code>gl_FragColor</code> which is a special variable resembling the output of the fragment shader. GLSL supports vector and matrix types, for example <code>vec4</code> is the four element vector and <code>mat3</code> is the 3x3 matrix. Vectors may be combined freely for example</p>
+<p><code class="sourceCode c">vec4(vec4(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>).xy, <span class="dv">4</span>, <span class="dv">5</span>) * <span class="fl">1.5</span></code></p>
+<p>will create vector (0, 1, 2, 3), take its first two fields (x, y) to create vector (0, 1, 4, 5) and then multiply by scalar resulting in vector (0, 1.5, 6, 7.5). GLSL also features standard mathematical functions such as trigonometry, exponential, geometric, vector or matrix. The <code>sampler2D</code> type refers to the texturing unit, to access its texture function <code>texture2D()</code> is used. The way by which samplers calculates the texture color is determined by the parameters set through the API. For example having two pixel texture with one black and one white pixel with setting</p>
+<p><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);</code><br /><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);</code><br /><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);</code><br /><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);</code></p>
+<p>will cause linear color mapping and therefore black-white color gradient. However setting</p>
+<p><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);</code><br /><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);</code><br /><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);</code><br /><code class="x">glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);</code></p>
+<p>will create chessboard pattern. These setting are done per texture object and reflected by texturing unit to which the texture is bound.</p>
+<h3 id="truetype-font-rendering"><a href="#truetype-font-rendering">TrueType font rendering</a></h3>
+<p>In order to be able to render TrueType vector fonts, each glyph needs to be pre-rasterized first. The best method to achieve this is to create glyph atlas texture with all glyphs needed and then generate strings as VBOs with proper texture coordinates for each character. To utilize unicode support, this atlas needs to be appended by newly requested characters in real-time as there are too many glyphs to be pre-rasterized. The <a href="http://www.freetype.org/">FreeType2</a> library can rasterize glyphs from the TrueType font file on the fly. These glyphs are in fact alpha maps to be processed by the fragment shader:</p>
+<p><code class="sourceCode c">gl_FragColor = color * texture2D(texture, texcoord).a;</code></p>
+<p>or</p>
+<p><code class="sourceCode c">gl_FragColor = vec4(color.rgb, texture2D(texture, texcoord).a);</code></p>
+<p>if the alpha blending is enabled with</p>
+<p><code class="sourceCode c">glEnable(GL_BLEND);</code><br /><code class="sourceCode c">glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);</code></p>
+<p>where <code>color</code> is the text color.</p>
+<p>The FreeType library loads the font faces from <code>.ttf</code> files and has following API:</p>
+<table>
+<caption>FreeType API</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Function</strong></th>
+<th align="left"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>FT_Init_FreeType()</code></td>
+<td align="left">Initialize the library</td>
+</tr>
+<tr class="even">
+<td align="left"><code>FT_New_Face()</code></td>
+<td align="left">Load font face from file</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>FT_Select_Charmap()</code></td>
+<td align="left">Set encoding (Unicode)</td>
+</tr>
+<tr class="even">
+<td align="left"><code>FT_Set_Pixel_Sizes()</code></td>
+<td align="left">Set font size</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>FT_Load_Char()</code></td>
+<td align="left">Rasterize single glyph</td>
+</tr>
+<tr class="even">
+<td align="left"><code>FT_Done_FreeType()</code></td>
+<td align="left">Release resources</td>
+</tr>
+</tbody>
+</table>
+<p>The glyphs are loaded to texture with <code>glTexSubImage2D()</code>. To change the font size it is better to rasterize new glyph with <code>FT_Load_Char()</code>, then trying to scale the glyph in the fragment shader. To achieve best results, there should be 1:1 mapping between glyph pixels and OpenGL fragments and blending should be enabled. The library also supports kerning and other features to make the result text better or to create special effects. Special care needs to be taken into account about pixel alignment when rendering text. Vertex shader must ensure that each glyph verticies are aligned without pixel fractions. The typical example is the centering of text with even pixel width, which causes verticies to be aligned with 0.5 pixel offset. This causes major aliasing artifacts during rasterization and can be prevented by subtracting the fragment coordinate fractional part in the vertex shader.</p>
+<h3 id="texture-streaming-extensions"><a href="#texture-streaming-extensions">Texture streaming extensions</a></h3>
+<p>Loading textures the standard way causes copying the pixel buffer to the texture memory, which is very inefficient if the texture needs to be changed often. This is typical to streaming video through the GPU. There is a <code>KHR_image_base</code> extension for the EGL and a <code>OES_EGL_image</code> extension for the OpenGL ES defined in <code>EGL/eglext.h</code> and <code>GLES2/gl2ext.h</code> respectively. These extensions are platform specific, this text refers to the Texas Instruments implementation. The <code>EGLImage</code> offers a way to map images in the EGL API to be accessed in OpenGL as <code>GL_TEXTURE_EXTERNAL_OES</code> textures. This works as memory mapping and no copying is done whatsoever, synchronization is handled by the application. The mapping is created by</p>
+<pre class="sourceCode c"><code class="sourceCode c">EGLImageKHR img =
+  eglCreateImageKHR(dpy, EGL_NO_CONTEXT, EGL_RAW_VIDEO_TI, ptr, attr);
+glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, (GLeglImageOES)img);
+glBindTexture(GL_TEXTURE_EXTERNAL_OES, myTexture);</code></pre>
+<p>where <code>dpy</code> is the active EGL display, <code>ptr</code> is pointer to the video buffer and <code>attr</code> is array of configuration options. This extension is also able to perform YUV to RGB color-space conversion in the background.</p>
 <h2 id="inertial-measurement-subsystem"><a href="#inertial-measurement-subsystem">Inertial measurement subsystem</a></h2>
 <p>Application needs to know its spatial orientation for rendering, there are three devices which may provide such information, gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the <a href="#hardware">hardware</a> chapter.</p>
 <h3 id="industrial-io-module"><a href="#industrial-io-module">Industrial I/O module</a></h3>
@@ -252,7 +532,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </ul>
 <p>representing measurements from gyroscope, accelerometer and magnetometer respectively.</p>
 <h3 id="dcm-algorithm"><a href="#dcm-algorithm">DCM algorithm</a></h3>
-<p>Equations needed to calculate device attitude have been derived from <span class="citation">[6]</span>. Gyroscope measures angular speed around device axes, it offers high differential precision and fast sampling rate, however it suffers slight zero offset error. Device attitude can be obtained simply by integrating measured angular rates, provided that initial attitude is known. The angular rate is defined as</p>
+<p>Equations needed to calculate device attitude have been derived from <span class="citation">[7]</span>. Gyroscope measures angular speed around device axes, it offers high differential precision and fast sampling rate, however it suffers slight zero offset error. Device attitude can be obtained simply by integrating measured angular rates, provided that initial attitude is known. The angular rate is defined as</p>
 <p><span class="math">\(\overrightarrow{\omega_g} = \frac{\mathrm{d}}{\mathrm{d}t} \overrightarrow{\Phi}_{(t)}\)</span>,</p>
 <p>so the angular displacement between last two samples is</p>
 <p><span class="math">\(\left [\Phi_x, \Phi_y, \Phi_z \right ] = \left [ \omega_x, \omega_y, \omega_z \right ] \cdot _\Delta t\)</span>.</p>
@@ -301,7 +581,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li>timeouts and buffer sizes</li>
 </ul>
 <p>In canonical mode, driver uses line buffer and allows line editing. Buffer is passed to the application (made readable) after new line is encountered. It may be combined with echo mode, which will automatically send received characters back. This is how standard console line works, however if application needs to be in full control, driver may be switched to raw mode with per-character buffers and echo disabled. Also specific control characters for canonical mode may be configured.</p>
-<p>GPS receivers uses <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">NMEA 183 standard</a><span class="citation">[7]</span>. Communication is done in sentences, each message starts with dollar sign followed by source name and sentence type, then there is comma separated list of data fields optionally terminated by a checksum. Each sentence is appended with carriage return and new line. For example in sentence</p>
+<p>GPS receivers uses <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">NMEA 183 standard</a><span class="citation">[8]</span>. Communication is done in sentences, each message starts with dollar sign followed by source name and sentence type, then there is comma separated list of data fields optionally terminated by a checksum. Each sentence is appended with carriage return and new line. For example in sentence</p>
 <p><code class="sourceCode perl"><span class="dt">$GPGGA</span>,<span class="dv">000000</span>,<span class="fl">4914.266</span>,N,<span class="fl">01638.583</span>,E,<span class="dv">1</span>,<span class="dv">8</span>,<span class="dv">1</span>,<span class="dv">257</span>,M,<span class="fl">46.43</span>,M,,*<span class="dv">46</span></code></p>
 <p><code>GP</code> is source name (GPS receiver), <code>GGA</code> is sentence type (fix information), <code>*46</code> is a checksum and rest are data fields. Checksum is delimited by asterisk and consist of two character hexadecimal number calculated as bitwise XOR of all character between dollar and asterisk. Note that fields may be empty (as last two fields in the example) and numbers may have fractional parts.</p>
 <table>
@@ -391,7 +671,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li>13th field is <code>A</code> for arrived or <code>V</code> for not arrived to destination</li>
 </ul>
 <h3 id="navigation"><a href="#navigation">Navigation</a></h3>
-<p>As Earth shape is very complex, there are two layers of approximation used for computing position. Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water. Most recent geoid model is EGM96 which is used together with <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">WGS84 reference ellipsoid</a><span class="citation">[8]</span>. This ellipsoid has semi-major axis of <span class="math">\(a = 6378137\)</span> meters and flattening <span class="math">\(f = 1/298.257223563\)</span>. Note that ellipsoid flattening is defined as</p>
+<p>As Earth shape is very complex, there are two layers of approximation used for computing position. Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water. Most recent geoid model is EGM96 which is used together with <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">WGS84 reference ellipsoid</a><span class="citation">[9]</span>. This ellipsoid has semi-major axis of <span class="math">\(a = 6378137\)</span> meters and flattening <span class="math">\(f = 1/298.257223563\)</span>. Note that ellipsoid flattening is defined as</p>
 <p><span class="math">\(f = \dfrac{a - b}{a}\)</span>,</p>
 <p>where <em>b</em> is the semi-minor axis. The eccentricity is defined as</p>
 <p><span class="math">\(e = 2f - f^2\)</span>.</p>
@@ -406,7 +686,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p><span class="math">\(R = \dfrac{\sqrt{b^4 \sin(\varphi)^2 + a^4 \cos(\varphi)^2}}{\sqrt{b^2 \sin(\varphi)^2 + a^2 \cos(\varphi)^2}}\)</span>.</p>
 <p>Application needs to know projections of specific landmarks as normalized horizontal and vertical coordinates (in range of -1 to 1) used for rendering</p>
 <p><span class="math">\(\begin{bmatrix} x \cdot FOV_x \\ y \cdot FOV_y \end{bmatrix} =  \begin{bmatrix} \alpha_{proj} - \alpha_{dev} \\ \beta_{proj} - \beta_{dev} \end{bmatrix} \times \begin{bmatrix} \cos(\gamma_{dev}) &amp; -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) &amp; \cos(\gamma_{dev})  \end{bmatrix} \)</span>,</p>
-<p>where <em>FOV</em> is the field of view, <em>dev</em> means device angle (calculated by <a href="#inertial-measurement-subsystem">inertial subsystem</a>) and <em>proj</em> means projection angle (defined later on in this section). Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center. However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface, connecting two points with shortest route. <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html">Spherical trigonometry</a><span class="citation">[9]</span> defines basis for orthodrome calculations. Heading changes along the route and its initial value is the horizontal projection angle</p>
+<p>where <em>FOV</em> is the field of view, <em>dev</em> means device angle (calculated by <a href="#inertial-measurement-subsystem">inertial subsystem</a>) and <em>proj</em> means projection angle (defined later on in this section). Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center. However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface, connecting two points with shortest route. <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html">Spherical trigonometry</a><span class="citation">[10]</span> defines basis for orthodrome calculations. Heading changes along the route and its initial value is the horizontal projection angle</p>
 <p><span class="math">\(\alpha_{proj} = \arctan \left ( \dfrac{\sin(\lambda - \lambda_0) \cos(\varphi)} {\cos(\varphi_0) \sin(\varphi) - \sin(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0)} \right )\)</span>,</p>
 <p>the zero index refers to the device coordinate. Angular distance between those two points is</p>
 <p><span class="math">\(\phi = \arccos(\sin(\varphi_0) \sin(\varphi) + \cos(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0))\)</span>.</p>
@@ -435,7 +715,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <blockquote>
 <p>TODO: Hardware description</p>
 </blockquote>
-<p><strong><a href="http://www.ti.com/product/omap4460">OMAP4460</a> application processor</strong><span class="citation">[10]</span></p>
+<p><strong><a href="http://www.ti.com/product/omap4460">OMAP4460</a> application processor</strong><span class="citation">[11]</span></p>
 <ul>
 <li>two ARM Cortex-A9 SMP general-purpose processors</li>
 <li>IVA 3 video accelerator, 1080p capable</li>
@@ -443,7 +723,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li>SGX540 3D graphics accelerator, OpenGL ES 2.0 compatible</li>
 <li>HDMI v1.3 video output</li>
 </ul>
-<p><strong><a href="http://www.invensense.com/mems/gyro/mpu9150.html">MPU-9150</a> motion tracking device</strong><span class="citation">[11]</span></p>
+<p><strong><a href="http://www.invensense.com/mems/gyro/mpu9150.html">MPU-9150</a> motion tracking device</strong><span class="citation">[12]</span></p>
 <ul>
 <li>embedded MPU-6050 3-axis gyroscope and accelerometer</li>
 <li>embedded AK8975 3-axis digital compass</li>
@@ -750,12 +1030,13 @@ varying vec2 texCoord;
 <p>[3] Consultative Committee on International Radio. Recommendation BT.601. [online]. 2011. [Accessed 20 November 2013]. Available from: <a href="http://www.itu.int/rec/R-REC-BT.601/en" title="http://www.itu.int/rec/R-REC-BT.601/en">http://www.itu.int/rec/R-REC-BT.601/en</a></p>
 <p>[4] TI OMAP Developers. TI OMAP Trunk PPA. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="https://launchpad.net/~tiomap-dev/+archive/omap-trunk" title="https://launchpad.net/~tiomap-dev/+archive/omap-trunk">https://launchpad.net/~tiomap-dev/+archive/omap-trunk</a></p>
 <p>[5] Khronos Group. OpenGL ES 2.x - for Programmable Hardware. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.khronos.org/opengles/2_X" title="http://www.khronos.org/opengles/2_X">http://www.khronos.org/opengles/2_X</a></p>
-<p>[6] JAZAR, Reza N. <em>Theory of applied robotics: kinematics, dynamics, and control</em>. 2nd ed. New York: Springer, 2010. ISBN 978-1-4419-1749-2. </p>
-<p>[7] National Marine Electronics Association. NMEA 0183. [online]. 2008. [Accessed 20 November 2013]. Available from: <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp" title="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp</a></p>
-<p>[8] NIMA. Department of Defense World Geodetic System 1984. [online]. 1997. [Accessed 20 November 2013]. Available from: <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf" title="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf</a></p>
-<p>[9] WEISSTEIN, Eric W. <em>Spherical trigonometry</em> [online]. MathWorld. [Accessed 20 November 2013]. Available from: <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html" title="http://mathworld.wolfram.com/SphericalTrigonometry.html">http://mathworld.wolfram.com/SphericalTrigonometry.html</a></p>
-<p>[10] Texas Instruments. OMAP 4460 Multimedia Device. [online]. 2012. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/product/omap4460" title="http://www.ti.com/product/omap4460">http://www.ti.com/product/omap4460</a></p>
-<p>[11] InvenSense. MPU-9150 Nine-axis MEMS MotionTracking™ Device. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.invensense.com/mems/gyro/mpu9150.html" title="http://www.invensense.com/mems/gyro/mpu9150.html">http://www.invensense.com/mems/gyro/mpu9150.html</a></p>
+<p>[6] MUNSHI, Aaftab, GINSBURG, Dan and SHREINER, Dave. <em>OpenGLES 2.0 programming guide</em>. New York: Addison-Wesley Professional, 2009. ISBN 978-0-321-50279-7. </p>
+<p>[7] JAZAR, Reza N. <em>Theory of applied robotics: kinematics, dynamics, and control</em>. 2nd ed. New York: Springer, 2010. ISBN 978-1-4419-1749-2. </p>
+<p>[8] National Marine Electronics Association. NMEA 0183. [online]. 2008. [Accessed 20 November 2013]. Available from: <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp" title="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp</a></p>
+<p>[9] NIMA. Department of Defense World Geodetic System 1984. [online]. 1997. [Accessed 20 November 2013]. Available from: <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf" title="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf</a></p>
+<p>[10] WEISSTEIN, Eric W. <em>Spherical trigonometry</em> [online]. MathWorld. [Accessed 20 November 2013]. Available from: <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html" title="http://mathworld.wolfram.com/SphericalTrigonometry.html">http://mathworld.wolfram.com/SphericalTrigonometry.html</a></p>
+<p>[11] Texas Instruments. OMAP 4460 Multimedia Device. [online]. 2012. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/product/omap4460" title="http://www.ti.com/product/omap4460">http://www.ti.com/product/omap4460</a></p>
+<p>[12] InvenSense. MPU-9150 Nine-axis MEMS MotionTracking™ Device. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.invensense.com/mems/gyro/mpu9150.html" title="http://www.invensense.com/mems/gyro/mpu9150.html">http://www.invensense.com/mems/gyro/mpu9150.html</a></p>
 </div>
 </body>
 </html>

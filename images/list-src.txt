@@ -1,5 +1,5 @@
 [v4l2capture]:     images/v4l2capture.svg
 [overview]:        images/overview.svg
 [pipeline]:        images/pipeline.svg
-[shaders]:           images/shaders.svg
+[shaders]:         images/shaders.svg
 [output]:          images/output.png
