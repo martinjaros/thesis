@@ -203,4 +203,5 @@ $\mathbf{DCM}_{(t)}  =  W_{gyro}~ (\mathbf{R}_{gyro} \times \mathbf{DCM}_{(t-1)}
 
 where $\widehat{\mathbf{I}}_{xyz}$ and $\widehat{\mathbf{K}}_{xyz}$ are calculated from magnetometer and accelerometer measurements.
 *W~gyro~* is the weight of the gyroscope measurement, it must be estimated by trial and error to mitigate its drift but not add too much noise.
+The DCM rows needs to be normalized after computing the average, as the equation does not ensure it.
 
