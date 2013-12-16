@@ -1,7 +1,7 @@
 ## Inertial measurement subsystem
 
 Application needs to know its spatial orientation for rendering, there are three devices which may provide such information,
-gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the [hardware](#hardware) chapter.
+gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the [hardware (3)](#hardware) chapter.
 
 ### Industrial I/O module
 
@@ -126,7 +126,7 @@ $\mathbf{R}_{gyro} \doteq
 \Phi_x \Phi_y + \Phi_z & 1 - \Phi_x \Phi_y \Phi_z & - \Phi_x \\
 \Phi_x \Phi_z - \Phi_y & \Phi_x + \Phi_y \Phi_z & 1 \end{bmatrix}$.
 
-Let's define the directional cosine matrix describing device attitude
+Let us define the directional cosine matrix describing device attitude
 
 $\mathbf{DCM} = \begin{bmatrix}
 \widehat{\mathbf{I}}\cdot \widehat{\mathbf{x}} & \widehat{\mathbf{I}}\cdot \widehat{\mathbf{y}} & \widehat{\mathbf{I}}\cdot \widehat{\mathbf{z}} \\

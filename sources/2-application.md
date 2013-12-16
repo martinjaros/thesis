@@ -1,23 +1,23 @@
 # Application
 
-Application is divided into four subsystem, each being standalone component.
-The [video subsystem](#video-subsystem) is responsible for enumeration and control of the video architecture and its devices.
+Application is divided into four subsystems, each being standalone component.
+The [video subsystem (2.2)](#video-subsystem) is responsible for enumeration and control of the video architecture and its devices.
 It provides the application with raw video buffers and means to configure its format.
 It is designed to support high range of devices from embedded image sensors to external cameras,
 while using single application interface and common image format.
 Depending on the hardware, high definition video output is expected.
-Video subsystem is optimized for synchronous operation with the [graphics subsystem](#graphics-subsystem).
+Video subsystem is optimized for synchronous operation with the [graphics subsystem (2.3)](#graphics-subsystem).
 Graphics subsystem utilizes platform interfaces for its graphic accelerator units to provide optimized video processing and rendering.
 It is hardware independent through common library support to run on most embedded systems.
 Its goal is to provide application with efficient methods for rendering primitives, video frames and vector fonts
 with object oriented interface. These methods combined will create the scene overlay over the source video in real time.
 Graphic output should be high definition digital, maintaining source quality.
-Data needed for the overlay creating are provided by [satellite](#satellite-navigation-subsystem) and [inertial](#inertial-measurement-subsystem) subsystems.
+Data needed for the overlay creation are provided by [satellite (2.5)](#satellite-navigation-subsystem) and [inertial (2.4)](#inertial-measurement-subsystem) subsystems.
 They are both designed for asynchronous operation. The satellite navigation provides application with positional and kinematic data.
 It is responsible for communication with external navigation systems such as GPS receivers and all needed calculations.
 Its interfaces allows application to access required information asynchronously as needed by the rendering loop.
 The inertial measurement subsystem utilizes sensors needed for spatial orientation not provided by satellite navigation.
-As there are many such sensor, common interface is provided. Subsystem handles all initialization, control, data acquisition
+As there are many such sensors, common interface is provided. Subsystem handles all initialization, control, data acquisition
 and required calculations. Its internal state machine provides application the requested data on demand.
 Application is designed to be modular and highly configurable.
 All constants used throughout the implementation are defined with a default value and modifiable through the configuration file.
@@ -80,7 +80,7 @@ Complete kernel device model is exported as `sysfs` file-system and typically mo
 
 Table: Available functions for working with device file descriptors
 
-For example let's assume a generic peripheral device connected by the I^2^C bus.
+For example, assume a generic peripheral device connected by the I^2^C bus.
 First, to tell kernel there is such a device, the `sysfs` file-system may be used
 
 `echo $DEVICE_NAME $DEVICE_ADDRESS > /sys/bus/i2c/devices/i2c-1/new_device`{.bash}
@@ -94,7 +94,7 @@ Each request is called by
 
 where `fd` is the file descriptor, `REQNUM` is the request number defined in the driver header and `data` is the structure passed to the kernel.
 This request will be synchronously processed by the kernel and the result stored in the `data` structure.
-Let's assume this devices has been configured to stream an integer value every second to the application.
+Assume this devices has been configured to stream an integer value every second to the application.
 To synchronize with this timing application may use
 
 `struct pollfd fds = {fd, POLLIN};`{.c} \

@@ -40,7 +40,8 @@ EGL library is used for initialization of the OpenGL context, following function
 
 Table: EGL function for OpenGL ES initialization
 
-Graphical pipeline is programmable, the program runs on the GPU,
+Graphical pipeline is described in the diagram below.
+The pipeline is programmable, the program runs on the GPU,
 while OpenGL API is used for communication with the application running on CPU.
 
 ![OpenGL ES pipeline][pipeline]
@@ -69,6 +70,8 @@ Table: OpenGL functions for working with shader programs
 The vertex shader processes geometry defined as array of verticies, it is executed per vertex.
 Result verticies are rasterized into fragments and then fragment shader is executed per fragment.
 Result fragments are then written into the framebuffer, each shader execution is done in parallel.
+Following figure shows how data are processed by the shader program.
+\clearpage
 
 ![OpenGL ES shader program][shaders]
 
@@ -155,10 +158,11 @@ void main()
 This vertex shader takes one vertex attribute as a vector, where first two fields are display coordinates
 and the second two fields are texture coordinates.
 It defines varying variable to pass texture coordinates to the fragment shader.
-The `gl_Position` is special variable resembling the output of the vertex shader.
+The `gl_Position` is special variable resembling the output of the vertex shader (the vertex position).
 The fragment shader access texturing unit passed as a uniform variable
 with the interpolated texture coordinates from the vertex shader.
-Result is written to `gl_FragColor` which is a special variable resembling the output of the fragment shader.
+Result is written to `gl_FragColor` which is a special variable resembling the output of the fragment shader
+(the RGBA color).
 GLSL supports vector and matrix types, for example `vec4` is the four element vector and `mat3` is the 3x3 matrix.
 Vectors may be combined freely for example
 

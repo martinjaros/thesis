@@ -33,7 +33,7 @@ This is how standard console line works, however if application needs to be in f
 driver may be switched to raw mode with per-character buffers and echo disabled.
 Also specific control characters for canonical mode may be configured.
 
-GPS receivers uses [NMEA 183 standard][nmea0183][@NMEA0183]. Communication is done in sentences,
+GPS receivers uses [NMEA 183 standard][nmea0183] [@NMEA0183]. Communication is done in sentences,
 each message starts with dollar sign followed by source name and sentence type,
 then there is comma separated list of data fields optionally terminated by a checksum.
 Each sentence is appended with carriage return and new line. For example in sentence
@@ -107,7 +107,7 @@ The **RMB** sentence has following fields:
 
 As Earth shape is very complex, there are two layers of approximation used for computing position.
 Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water.
-Most recent geoid model is EGM96 which is used together with [WGS84 reference ellipsoid][wgs84][@WGS84].
+Most recent geoid model is EGM96 which is used together with [WGS84 reference ellipsoid][wgs84] [@WGS84].
 This ellipsoid has semi-major axis of $a = 6378137$ meters and flattening $f = 1/298.257223563$.
 Note that ellipsoid flattening is defined as
 
@@ -149,11 +149,11 @@ $\begin{bmatrix} x \cdot FOV_x \\ y \cdot FOV_y \end{bmatrix} =
 \times \begin{bmatrix} \cos(\gamma_{dev}) & -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) & \cos(\gamma_{dev})  \end{bmatrix}
 $,
 
-where *FOV* is the field of view, *dev* means device angle (calculated by [inertial subsystem](#inertial-measurement-subsystem)) and
+where *FOV* is the field of view, *dev* means device angle (calculated by [inertial subsystem (2.4)](#inertial-measurement-subsystem)) and
 *proj* means projection angle (defined later on in this section).
 Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center.
 However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface,
-connecting two points with shortest route. [Spherical trigonometry][sphtrig][@SphTrig] defines basis for orthodrome calculations.
+connecting two points with shortest route. [Spherical trigonometry][sphtrig] [@SphTrig] defines basis for orthodrome calculations.
 Heading changes along the route and its initial value is the horizontal projection angle
 
 $\alpha_{proj} = \arctan \left ( \dfrac{\sin(\lambda - \lambda_0) \cos(\varphi)}

@@ -14,7 +14,8 @@ Complex external navigation system may be also connected. This allows integratio
 such as moving map systems, PDAs or other specialized hardware.
 These provides user with classic route navigation and map projection, while this project gives spatial extension to further improve total situational awareness.
 The analogy are the head up and head down displays, each delivering specific set of information.
-This project is focuses on visual enhancement instead of a full featured navigation device.
+This project focuses on visual enhancement instead of a full featured navigation device.
+Overview on of the project design is in the following figure.
 
 ![Project overview][overview]
 
@@ -24,7 +25,7 @@ Application is designed to run in embedded environments, where power management 
 While many platforms features multiple symmetrical processor cores - CPUs,
 application should focus on lowest per-core usage as possible.
 This can be done by delegating specific tasks to specialized hardware.
-CPU is specialized in execution of a single thread, integer and bitwise operations, with many branches in its code.
+CPU is specialized in execution of single thread, integer and bitwise operations, with many branches in its code.
 With vector and floating point extensions they are also very efficient in computation of difficult mathematical algorithms.
 However they do not perform well in simple calculations over large amounts of data, where mass parallelization is possible.
 This is the case in graphics where special graphics processors - GPUs have been deployed.
@@ -33,7 +34,7 @@ They scale efficiently with the amount of data needed to be processed due to par
 however they have problems with nonlinear code with branches.
 While CPUs have long pipelines for branch optimizations, GPUs cannot employ those,
 any branch in their code will be extremely inefficient and should be avoided.
-[Graphics](#graphics-subsystem) chapter focuses on this area.
+[Graphics (2.3)](#graphics-subsystem) chapter focuses on this area.
 There are also available specialized subsystems designed and optimized for a single purpose.
 For example video accelerators, capable of video encoding and decoding, image capture systems or peripheral drivers.
 They will be mentioned in specific chapters.
@@ -45,13 +46,13 @@ between application and the hardware. However, to provide enough abstraction som
 Operating systems may be real-time, giving applications full control, behaving just like large libraries.
 This is favorable approach in embedded systems as it allows precise timings.
 There are many such systems specially tailored for embedded applications like
-[FreeRTOS][freertos] or proprietary [VxWorks][vxworks]. On the other hand, as recent processors improved greatly in power,
-efficiency and capabilities, it is possible and quite feasible to run a full featured system like [Linux][linux] or proprietary [Windows CE][wince].
+[FreeRTOS][freertos] [@FreeRTOS] or proprietary [VxWorks][vxworks] [@VxWorks]. On the other hand, as recent processors improved greatly in power,
+efficiency and capabilities, it is possible and quite feasible to run a full featured system like [Linux][linux] or proprietary [Windows CE][wince] [@WinCE].
 Linux kernel is highly portable and configurable, although it does restrict applications from real-time use (Linux RT patches also exist for real-time applications),
 as all hardware dependent modules which requires full control over the hardware are part of the kernel itself, application does not need to run in real-time at all.
 Other advantages are free, open and well documented sources, highly standardized and POSIX compliant application interface, large amount of drivers with good manufacturer support.
 While its disadvantages are very large code base and steep learning curve, which may slow the initial development.
-Nevertheless Linux kernel has been chosen for the project, more details about its interfaces are in the [Linux kernel](#linux-kernel) chapter.
+Nevertheless Linux kernel has been chosen for the project, more details about its interfaces are in the [Linux kernel (2.1)](#linux-kernel) chapter.
 While the application is designed to be highly portable depending only on the kernel itself,
-several devices has been chosen as the reference, they are listed in the [hardware](#hardware) chapter.
+several devices has been chosen as the reference, they are listed in the [hardware (3)](#hardware) chapter.
 
