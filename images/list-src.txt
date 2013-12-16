@@ -2,4 +2,5 @@
 [overview]:        images/overview.svg
 [pipeline]:        images/pipeline.svg
 [shaders]:         images/shaders.svg
+[hardware]:        images/hardware.svg
 [output]:          images/output.png

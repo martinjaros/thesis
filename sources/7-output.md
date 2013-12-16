@@ -1,6 +1,7 @@
 ## Output creation
 
-The [output image example](#output-image-example) appendix shows the actual output image.
+The image below shows the actual output rendered by the application, there is no video source (solid white background).
+Resolution was reduced to 320x240 to make the image small, this caused some aliasing artifacts normally not visible.
 In the top left corner is the current speed over ground as reported by the satellite navigation,
 while in the top right corner is the current altitude above mean sea level.
 Speed is displayed in kilometers per hour and the altitude in meters.
@@ -13,6 +14,9 @@ The dashed horizontal line in the center of the image is the horizon line,
 it follows the horizon as calculated by inertial subsystem by moving up or down and rotating around its center.
 Orientation is determined by the marginal markers, they points always to the ground.
 If the horizon is not visible, dashed arrow is shown instead pointing up or down to where the horizon is hidden.
+
+![Visible output][output]
+
 Application accepts database of landmarks, following file was used in this example:
 
 ```{.python}

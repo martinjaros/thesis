@@ -37,4 +37,7 @@
 [wgs84]:           http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf
 [opengles]:        http://www.khronos.org/opengles/2_X
 [freetype]:        http://www.freetype.org/
+[pandaboard]:      http://pandaboard.org/
+[bbb]:             http://beagleboard.org/products/beaglebone%20black
+[senshub]:         http://www.ti.com/tool/boostxl-senshub
 

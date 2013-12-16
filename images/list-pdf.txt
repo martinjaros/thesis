@@ -2,4 +2,5 @@
 [overview]:        images/overview.pdf
 [pipeline]:        images/pipeline.pdf
 [shaders]:         images/shaders.pdf
+[hardware]:        images/hardware.pdf
 [output]:          images/output.png

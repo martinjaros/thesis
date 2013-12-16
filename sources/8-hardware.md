@@ -1,25 +1,34 @@
 # Hardware
 
-> TODO: Hardware description
+![Proposed hardware][hardware]
 
-**[OMAP4460][omap4460] application processor**[@OMAP4460]
+The [OMAP4460][omap4460][@OMAP4460] application processor was chosen for the project,
+it features two ARM Cortex-A9 general-purpose CPUs and many specialized subsystems and peripherals.
+Internal image co-processor allows direct connection of image sensor via its serial interface,
+for example the [OV5640][ov5640].
+For graphic acceleration, there is the SGX540 GPU, HDMI v1.3 video output is available.
+The [MPU-9150][mpu9150][@MPU9150] is a motion tracking device composed of
+MPU-6050 3-axis gyroscope and accelerometer and AK8975 3-axis digital compass.
+It comes with I^2^C interface.
+TWL6032 is the power companion chip designed specifically for the OMAP platform,
+handling power path switching, and DC-DC voltage conversion.
+It can manage Li-ion battery as well as charging with extern power adapter or USB line.
+RS-232 connection is needed for external satellite navigation system as defined in NMEA 0183 specification,
+it should be connected to the UART via voltage level converter such as MAX232.
+USB device port allows connection to the external host, providing extra power source and generic data interface.
+Ethernet or mass storage gadget may be implemented over the USB device port.
+The embedded IVA 3 hardware video accelerator in the OMAP4460 is capable of encoding and decoding video streams simultaneously,
+without any load on the ARM cores, this allows media streaming through the USB port (possibly over IP network).
+External IP camera may also be connected. Additionally a USB host port may also be implemented for external camera connection.
 
- - two ARM Cortex-A9 SMP general-purpose processors
- - IVA 3 video accelerator, 1080p capable
- - image signal processor, 20MP capable
- - SGX540 3D graphics accelerator, OpenGL ES 2.0 compatible
- - HDMI v1.3 video output
+For generic testing there are also many development boards already available.
+The [Pandaboard ES][pandaboard] features the OMAP4460 and provides all peripheral interfaces.
+There is also a low price board the [BeagleBone Black][bbb] with a Sitara AM3358,
+while being much simpler, however most of the features needed are still available.
+Texas Instruments also distributes the [Sensor Hub BoosterPack][senshub] with all needed sensors.
 
-
-**[MPU-9150][mpu9150] motion tracking device**[@MPU9150]
-
- - embedded MPU-6050 3-axis gyroscope and accelerometer
- - embedded AK8975 3-axis digital compass
- - fully programmable, I^2^C interface
-
-
-**[OV5640][ov5640] image sensor**
-
- - 1080p, 5MP resolution
- - raw RGB or YUV output
+Application may also be fully emulated on PC in Linux environment.
+OpenGL ES 2.0 should run under Mesa3D natively.
+For video interface, GStreamer may be used together with the *v4l2loopback* module.
+Though serial interfaces needs to be emulated manually.
 

@@ -158,9 +158,3 @@ void main()
 }
 ~~~
 
-# Output image example
-
-This is the actual graphical output rendered by the application, there is no video source (solid white background).
-
-![Visible output][output]
-

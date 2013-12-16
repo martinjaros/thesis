@@ -70,7 +70,7 @@ The vertex shader processes geometry defined as array of verticies, it is execut
 Result verticies are rasterized into fragments and then fragment shader is executed per fragment.
 Result fragments are then written into the framebuffer, each shader execution is done in parallel.
 
-![OpenGL ES shader][shaders]
+![OpenGL ES shader program][shaders]
 
 GPU uses its own memory, it may be physically shared with the system memory,
 but is not directly accessible by the application.
