@@ -102,9 +102,9 @@ This can be described as a rotation
 
 $\mathbf{R}_{gyro} =
 \begin{bmatrix}
-1 & 0 & 0 \\ 
-0 & \cos(\Phi_x) & -\sin(\Phi_x) \\ 
-0 & \sin(\Phi_x) & \cos(\Phi_x)
+\cos(\Phi_z) & -\sin(\Phi_z) & 0 \\ 
+\sin(\Phi_z) & \cos(\Phi_z) & 0 \\ 
+0 & 0 & 1
 \end{bmatrix}
 \times
 \begin{bmatrix}
@@ -114,17 +114,17 @@ $\mathbf{R}_{gyro} =
 \end{bmatrix}
 \times
 \begin{bmatrix}
-\cos(\Phi_z) & -\sin(\Phi_y) & 0 \\ 
-\sin(\Phi_y) & \cos(\Phi_y) & 0 \\ 
-0 & 0 & 1
+1 & 0 & 0 \\ 
+0 & \cos(\Phi_x) & -\sin(\Phi_x) \\ 
+0 & \sin(\Phi_x) & \cos(\Phi_x)
 \end{bmatrix}$.
 
 With $_\Delta t$ close to zero a small-angle approximation may be used to simplify $\cos(x)=1$, $\sin(x)=x$
 
 $\mathbf{R}_{gyro} \doteq
-\begin{bmatrix} 1 & - \Phi_z & \Phi_y \\
-\Phi_x \Phi_y + \Phi_z & 1 - \Phi_x \Phi_y \Phi_z & - \Phi_x \\
-\Phi_x \Phi_z - \Phi_y & \Phi_x + \Phi_y \Phi_z & 1 \end{bmatrix}$.
+\begin{bmatrix} 1 & \Phi_x \Phi_y + \Phi_z & \Phi_x \Phi_z - \Phi_y \\
+- \Phi_z & 1 - \Phi_x \Phi_y \Phi_z & \Phi_x + \Phi_y \Phi_z \\
+\Phi_y & - \Phi_x & 1 \end{bmatrix}$.
 
 Let us define the directional cosine matrix describing device attitude
 
@@ -138,11 +138,11 @@ where $\widehat{\mathbf{I}}$ points to the north, $\widehat{\mathbf{J}}$ points 
 and therefore $\widehat{\mathbf{I}} = \widehat{\mathbf{J}} \times \widehat{\mathbf{K}}$.
 Roll, pitch and yaw angels in this matrix are
 
-$\gamma = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{23}}{\mathbf{DCM}_{33}} \right )$,
+$\gamma = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{32}}{\mathbf{DCM}_{33}} \right )$,
 
-$\beta = \arcsin (\mathbf{DCM}_{13})$,
+$\beta = \arcsin (\mathbf{DCM}_{31})$,
 
-$\alpha = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{12}}{\mathbf{DCM}_{11}} \right )$.
+$\alpha = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{21}}{\mathbf{DCM}_{11}} \right )$.
 
 DCM can be computed by applying consecutive rotations over time
 
@@ -193,7 +193,7 @@ $\overrightarrow{\mathbf{B}}_{corr2} = \widehat{\mathbf{K}}_{xyz} \times \overri
 Magnetic declination (sometimes referred as magnetic variation) is the horizontal portion of this rotation and is sometimes provided by the satellite navigation systems.
 To correct for this error, measured values have to be rotated by the inverse angle
 
-$\overrightarrow{\mathbf{B}}_{corr3} = \overrightarrow{\mathbf{B}}_{mag} \begin{bmatrix} \cos(var) & \sin(var) \\ - \sin(var) & \cos(var) \end{bmatrix}$.
+$\overrightarrow{\mathbf{B}}_{corr3} = \overrightarrow{\mathbf{B}}_{mag} \times \begin{bmatrix} \cos(var) & - \sin(var) \\ \sin(var) & \cos(var) \end{bmatrix}$.
 
 By combination of the corrected results from accelerometer and magnetometer complete DCM can be calculated.
 Weighted average should be used, in real-time this yields

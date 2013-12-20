@@ -145,8 +145,9 @@ Application needs to know projections of specific landmarks as normalized horizo
 vertical coordinates (in range of -1 to 1) used for rendering
 
 $\begin{bmatrix} x \cdot FOV_x \\ y \cdot FOV_y \end{bmatrix} = 
+\begin{bmatrix} \cos(\gamma_{dev}) & -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) & \cos(\gamma_{dev})  \end{bmatrix}
+\times
 \begin{bmatrix} \alpha_{proj} - \alpha_{dev} \\ \beta_{proj} - \beta_{dev} \end{bmatrix}
-\times \begin{bmatrix} \cos(\gamma_{dev}) & -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) & \cos(\gamma_{dev})  \end{bmatrix}
 $,
 
 where *FOV* is the field of view, *dev* means device angle (calculated by [inertial subsystem (2.4)](#inertial-measurement-subsystem)) and
