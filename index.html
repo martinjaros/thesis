@@ -43,16 +43,21 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </ul></li>
 <li><a href="#application">Application</a><ul>
 <li><a href="#linux-kernel">Linux kernel</a></li>
-<li><a href="#video-subsystem">Video subsystem</a></li>
+<li><a href="#video-subsystem">Video subsystem</a><ul>
+<li><a href="#implementation">Implementation</a></li>
+</ul></li>
 <li><a href="#graphics-subsystem">Graphics subsystem</a><ul>
 <li><a href="#opengl-es-2.0-api">OpenGL ES 2.0 API</a></li>
 <li><a href="#opengl-es-shading-language">OpenGL ES Shading Language</a></li>
 <li><a href="#truetype-font-rendering">TrueType font rendering</a></li>
 <li><a href="#texture-streaming-extensions">Texture streaming extensions</a></li>
+<li><a href="#system-integration">System integration</a></li>
+<li><a href="#implementation-1">Implementation</a></li>
 </ul></li>
 <li><a href="#inertial-measurement-subsystem">Inertial measurement subsystem</a><ul>
 <li><a href="#industrial-io-module">Industrial I/O module</a></li>
 <li><a href="#dcm-algorithm">DCM algorithm</a></li>
+<li><a href="#implementation-2">Implementation</a></li>
 </ul></li>
 <li><a href="#satellite-navigation-subsystem">Satellite navigation subsystem</a><ul>
 <li><a href="#communication">Communication</a></li>
@@ -213,6 +218,16 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p><code class="sourceCode bash"><span class="kw">modprobe</span> v4l2loopback</code><br /><code class="sourceCode bash"><span class="kw">gst-launch</span> udpsrc port=5004 caps=\</code><br /><code class="sourceCode bash"><span class="st">&quot;application/x-rtp,media=video,payload=96,clock-rate=90000,encoding-name=H264&quot;</span> <span class="kw">\</span></code><br /><code>! rtph264depay ! h264parse ! ducatih264dec ! v4l2sink device=/dev/video0</code></p>
 <p>On OMAP4460 this would consume only about 15% of the CPU time as the decoding is done by the IVA 3 video accelerator in parallel to the CPU which only passes pointers around and handles synchronization. Output format is NV12 which is similar to YU12 format described earlier, but there is only one chroma plane with two-byte samples, first byte being the U channel and the second byte the V channel, sampling is same 4:2:0. The YUV to RGB color space conversion must take place here, preferably implemented on the GPU as described above.</p>
 <p>Cortex-A9 cores on the OMAP4460 also have the NEON co-processor, capable of vector floating point math. Although not very supported by the GCC C compiler, there are many assembly written libraries implementing coders with the NEON acceleration. For example the <a href="http://www.libjpeg-turbo.org/"><em>libjpeg-turbo</em></a> library is implementing the <em>libjpeg</em> interface. It is useful for USB cameras, as the USB throughput is not high enough for raw high definition video, but is sufficient with JPEG coding (as most USB cameras supports JPEG, but does not support H.264). 1080p JPEG stream decoded with this library via its GStreamer plug-in will consume about 90% of the single CPU core time (note that there are two CPU cores available). However, comparable to the AVC, JPEG encoding will cause visible quality degradation in the raw stream (video looks grainy).</p>
+<h3 id="implementation"><a href="#implementation">Implementation</a></h3>
+<p>The subsystem is implemented as a standalone module designed for synchronous operation within the rendering loop. This implies a constant rendering latency as the multiple of the frame sampling time and the number of buffers in the kernel-space to user-space queue</p>
+<p><span class="math">\(latency = \dfrac{n}{f_s}\)</span>.</p>
+<p>The minimum number of buffers is 3, however only two buffers are actively used. The first buffer being used for the drawing in the user-space and the second buffer being used for the capture in the kernel-space. The third extra buffer is enqueued in the kernel-space to be used after the second buffer is filled (more than one extra buffer may be used, usually the total number of 4 buffers are used to prevent queue underflow in the case that the rendering loop momentary lingers). The implementation uses <code>select()</code> to wait for the kernel to fill the current buffer and then rotate the buffers in the queue. This means that the sampling rate is the maximum value possible for the capture device hardware and the total latency is <span class="math">\(2\,{{f_s}_{max}}^{-1}\)</span>. The following options are configured by the implementation</p>
+<ul>
+<li>width, height</li>
+<li>format (<code>&quot;RGB4&quot;</code>)</li>
+<li>interlacing</li>
+</ul>
+<p>The video subsystem is capable of using multiple capture devices. Two interlaced video streams per device is also possible. This allows implementation of stereoscopic and multilayer imaging. The video resolution may differ from screen resolution, but the pixel aspect ratio must match.</p>
 <h2 id="graphics-subsystem"><a href="#graphics-subsystem">Graphics subsystem</a></h2>
 <p>Graphical output in the Linux Kernel is accessible as a framebuffer device <code>/dev/fb</code>. This allows directly writing to a display memory from the application. OMAP platform further extends this interface to support its DSS2 architecture for multiplexing graphical and video systems with display outputs. There is a framebuffer device connected to the PowerVR SGX graphical accelerator with control interface at <code>/sys/class/graphics/fbX</code>, where <code>X</code> is the framebuffer number. The OMAP DSS subsystem is exported at <code>/sys/devices/platform/omapdss</code> as</p>
 <ul>
@@ -492,6 +507,117 @@ varying vec2 texcoord;
 glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, (GLeglImageOES)img);
 glBindTexture(GL_TEXTURE_EXTERNAL_OES, myTexture);</code></pre>
 <p>where <code>dpy</code> is the active EGL display, <code>ptr</code> is pointer to the video buffer and <code>attr</code> is array of configuration options. This extension is also able to perform YUV to RGB color-space conversion in the background.</p>
+<h3 id="system-integration"><a href="#system-integration">System integration</a></h3>
+<p>Linux distributions usually use common framework for graphical applications and user interfaces. To integrate this project into a high level graphical user interface application, the <code>eglCreateWindowSurface()</code> function binds the drawing surface to a specific native window. For windowless drawing (such as when the application runs directly on top of the kernel) a <code>NULL</code> window is used. The application is built as a plug-in object, that may be bound to higher level framework such as <em>XLib</em>, <em>GTK+</em> or <em>Qt</em>, which defines a specific window area and pass this to the <code>eglCreateWindowSurface()</code> function. For example, the next code snippet shows simple <em>XLib</em> integration.</p>
+<pre class="sourceCode c"><code class="sourceCode c">Display *display = XOpenDisplay(NULL);
+<span class="dt">unsigned</span> <span class="dt">long</span> color = BlackPixel(display, <span class="dv">0</span>);
+Window root = RootWindow(display, <span class="dv">0</span>);
+Window window =
+  XCreateSimpleWindow(display, root, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">800</span>, <span class="dv">600</span>, <span class="dv">0</span>, color, color);
+XMapWindow(display, window);
+XFlush(display);
+
+EGLConfig egl_config; <span class="co">// TODO: eglChooseConfig()</span>
+EGLDisplay egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+EGLSurface egl_surface =
+  eglCreateWindowSurface(egl_display, egl_config, window, NULL);</code></pre>
+<p>The same <em>GTK+</em> application would be</p>
+<pre class="sourceCode c"><code class="sourceCode c">GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+GtkWidget *video_window = gtk_drawing_area_new();
+gtk_widget_set_double_buffered(video_window, FALSE);
+gtk_container_add(GTK_CONTAINER(main_window), video_window);
+gtk_window_set_default_size(GTK_WINDOW(main_window), <span class="dv">640</span>, <span class="dv">480</span>);
+gtk_widget_show_all(main_window);
+
+EGLConfig egl_config; <span class="co">// TODO: eglChooseConfig()</span>
+EGLDisplay egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+GdkWindow *window = gtk_widget_get_window(video_window);
+EGLSurface egl_surface =
+  eglCreateWindowSurface(egl_display, egl_config, GDK_WINDOW_XID(window), NULL);</code></pre>
+<p>And the the <em>Qt</em> application</p>
+<pre class="sourceCode cpp"><code class="sourceCode cpp">QApplication app(<span class="dv">0</span>, NULL);
+QWidget window;
+window.resize(<span class="dv">800</span>, <span class="dv">600</span>);
+window.show();
+
+EGLConfig egl_config; <span class="co">// TODO: eglChooseConfig()</span>
+EGLDisplay egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+EGLSurface egl_surface =
+  eglCreateWindowSurface(egl_display, egl_config, window.winId(), NULL);</code></pre>
+<p>The <code>egl_config</code> structure is used to configure the OpenGL context, it is a NULL terminated list of attribute-value pairs. The following table shows some valid attributes.</p>
+<table>
+<caption>EGL attributes</caption>
+<thead>
+<tr class="header">
+<th align="left"><strong>Attribute</strong></th>
+<th align="left"><strong>Value</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>EGL_DEPTH_SIZE</code></td>
+<td align="left">Depth buffer size, in bits</td>
+</tr>
+<tr class="even">
+<td align="left"><code>EGL_RED_SIZE</code></td>
+<td align="left">Size of the red component of the color buffer, in bits</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>EGL_GREEN_SIZE</code></td>
+<td align="left">Size of the green component of the color buffer, in bits</td>
+</tr>
+<tr class="even">
+<td align="left"><code>EGL_BLUE_SIZE</code></td>
+<td align="left">Size of the blue component of the color buffer, in bits</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>EGL_ALPHA_SIZE</code></td>
+<td align="left">Size of the alpha component of the color buffer, in bits</td>
+</tr>
+<tr class="even">
+<td align="left"><code>EGL_RENDERABLE_TYPE</code></td>
+<td align="left"><code>EGL_OPENGL_BIT</code>, <code>EGL_OPENGL_ES_BIT</code>, <code>EGL_OPENGL_ES2_BIT</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>EGL_SURFACE_TYPE</code></td>
+<td align="left"><code>EGL_PBUFFER_BIT</code>, <code>EGL_PIXMAP_BIT</code>, <code>EGL_WINDOW_BIT</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="implementation-1"><a href="#implementation-1">Implementation</a></h3>
+<p>The graphics subsystem is implemented as a widget oriented drawing library. The widget is a standalone drawable object with a common drawing interface consisting of</p>
+<ul>
+<li>drawable type (geometry primitive, vector text, image)</li>
+<li>vertex buffer object</li>
+<li>vertex number</li>
+<li>texture object</li>
+<li>drawing mode type (lines, surfaces)</li>
+<li>drawing color and texture color mask</li>
+</ul>
+<p>A common drawing function is implemented for all widgets, arguments of this function are: translation (x, y screen coordinates), scale (0-1) and rotation (0-<span class="math">\(2\pi\)</span>). The translation coordinates are normalized before rendering. The following vertex shader is used to provide these calculations</p>
+<pre class="sourceCode c"><code class="sourceCode c">attribute vec4 coord;
+uniform vec2 offset;
+uniform vec2 scale;
+uniform <span class="dt">float</span> rot;
+varying vec2 texpos;
+<span class="dt">void</span> main()
+{
+  <span class="dt">float</span> sinrot = sin(rot);
+  <span class="dt">float</span> cosrot = cos(rot);
+  vec2 pos = vec2(coord.x * cosrot - coord.y * sinrot,
+                  coord.x * sinrot + coord.y * cosrot);
+  gl_Position = vec4(pos * scale + offset, <span class="dv">0</span>, <span class="dv">1</span>);
+  texpos = coord.zw;
+}</code></pre>
+<p>The respective fragment shader is</p>
+<pre class="sourceCode c"><code class="sourceCode c">uniform vec4 color;
+uniform vec4 mask;
+uniform sampler2D tex;
+varying vec2 texpos;
+<span class="dt">void</span> main()
+{
+  gl_FragColor = texture2D(tex, texpos) * mask + color;
+}</code></pre>
 <h2 id="inertial-measurement-subsystem"><a href="#inertial-measurement-subsystem">Inertial measurement subsystem</a></h2>
 <p>Application needs to know its spatial orientation for rendering, there are three devices which may provide such information, gyroscope, compass (magnetometer) and accelerometer. Hardware details about these devices are in the <a href="#hardware">hardware (3)</a> chapter.</p>
 <h3 id="industrial-io-module"><a href="#industrial-io-module">Industrial I/O module</a></h3>
@@ -527,30 +653,35 @@ glBindTexture(GL_TEXTURE_EXTERNAL_OES, myTexture);</code></pre>
 <li><code>magn_x</code></li>
 <li><code>magn_y</code></li>
 <li><code>magn_z</code></li>
+<li><code>pressure</code></li>
 </ul>
-<p>representing measurements from gyroscope, accelerometer and magnetometer respectively.</p>
+<p>representing measurements from gyroscope, accelerometer, magnetometer and barometer respectively. The barometer measurements are used for altitude calculation in satellite navigation subsystem and are not taking any part in DCM algorithm.</p>
 <h3 id="dcm-algorithm"><a href="#dcm-algorithm">DCM algorithm</a></h3>
 <p>Equations needed to calculate device attitude have been derived from <span class="citation">[10]</span>. Gyroscope measures angular speed around device axes, it offers high differential precision and fast sampling rate, however it suffers slight zero offset error. Device attitude can be obtained simply by integrating measured angular rates, provided that initial attitude is known. The angular rate is defined as</p>
 <p><span class="math">\(\overrightarrow{\omega_g} = \frac{\mathrm{d}}{\mathrm{d}t} \overrightarrow{\Phi}_{(t)}\)</span>,</p>
 <p>so the angular displacement between last two samples is</p>
 <p><span class="math">\(\left [\Phi_x, \Phi_y, \Phi_z \right ] = \left [ \omega_x, \omega_y, \omega_z \right ] \cdot _\Delta t\)</span>.</p>
 <p>This can be described as a rotation</p>
-<p><span class="math">\(\mathbf{R}_{gyro} = \begin{bmatrix} 1 &amp; 0 &amp; 0 \\  0 &amp; \cos(\Phi_x) &amp; -\sin(\Phi_x) \\  0 &amp; \sin(\Phi_x) &amp; \cos(\Phi_x) \end{bmatrix} \times \begin{bmatrix} \cos(\Phi_y) &amp; 0 &amp; \sin(\Phi_y) \\  0 &amp; 1 &amp; 0 \\  -\sin(\Phi_y) &amp; 0 &amp; \cos(\Phi_y) \end{bmatrix} \times \begin{bmatrix} \cos(\Phi_z) &amp; -\sin(\Phi_y) &amp; 0 \\  \sin(\Phi_y) &amp; \cos(\Phi_y) &amp; 0 \\  0 &amp; 0 &amp; 1 \end{bmatrix}\)</span>.</p>
+<p><span class="math">\(\mathbf{R}_{gyro} = \begin{bmatrix} \cos(\Phi_z) &amp; -\sin(\Phi_z) &amp; 0 \\  \sin(\Phi_z) &amp; \cos(\Phi_z) &amp; 0 \\  0 &amp; 0 &amp; 1 \end{bmatrix} \times \begin{bmatrix} \cos(\Phi_y) &amp; 0 &amp; \sin(\Phi_y) \\  0 &amp; 1 &amp; 0 \\  -\sin(\Phi_y) &amp; 0 &amp; \cos(\Phi_y) \end{bmatrix} \times \begin{bmatrix} 1 &amp; 0 &amp; 0 \\  0 &amp; \cos(\Phi_x) &amp; -\sin(\Phi_x) \\  0 &amp; \sin(\Phi_x) &amp; \cos(\Phi_x) \end{bmatrix}\)</span>.</p>
 <p>With <span class="math">\(_\Delta t\)</span> close to zero a small-angle approximation may be used to simplify <span class="math">\(\cos(x)=1\)</span>, <span class="math">\(\sin(x)=x\)</span></p>
-<p><span class="math">\(\mathbf{R}_{gyro} \doteq \begin{bmatrix} 1 &amp; - \Phi_z &amp; \Phi_y \\ \Phi_x \Phi_y + \Phi_z &amp; 1 - \Phi_x \Phi_y \Phi_z &amp; - \Phi_x \\ \Phi_x \Phi_z - \Phi_y &amp; \Phi_x + \Phi_y \Phi_z &amp; 1 \end{bmatrix}\)</span>.</p>
+<p><span class="math">\(\mathbf{R}_{gyro} \doteq \begin{bmatrix} 1 &amp; \Phi_x \Phi_y + \Phi_z &amp; \Phi_x \Phi_z - \Phi_y \\ - \Phi_z &amp; 1 - \Phi_x \Phi_y \Phi_z &amp; \Phi_x + \Phi_y \Phi_z \\ \Phi_y &amp; - \Phi_x &amp; 1 \end{bmatrix}\)</span>.</p>
 <p>Let us define the directional cosine matrix describing device attitude</p>
 <p><span class="math">\(\mathbf{DCM} = \begin{bmatrix} \widehat{\mathbf{I}}\cdot \widehat{\mathbf{x}} &amp; \widehat{\mathbf{I}}\cdot \widehat{\mathbf{y}} &amp; \widehat{\mathbf{I}}\cdot \widehat{\mathbf{z}} \\ \widehat{\mathbf{J}}\cdot \widehat{\mathbf{x}} &amp; \widehat{\mathbf{J}}\cdot \widehat{\mathbf{y}} &amp; \widehat{\mathbf{J}}\cdot \widehat{\mathbf{z}} \\  \widehat{\mathbf{K}}\cdot \widehat{\mathbf{x}} &amp; \widehat{\mathbf{K}}\cdot \widehat{\mathbf{y}} &amp; \widehat{\mathbf{K}}\cdot \widehat{\mathbf{z}} \end{bmatrix} = \begin{bmatrix} \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{J}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \end{bmatrix}\)</span>,</p>
-<p>where <span class="math">\(\widehat{\mathbf{I}}\)</span> points to the north, <span class="math">\(\widehat{\mathbf{J}}\)</span> points to the east, <span class="math">\(\widehat{\mathbf{K}}\)</span> points to the ground and therefore <span class="math">\(\widehat{\mathbf{I}} = \widehat{\mathbf{J}} \times \widehat{\mathbf{K}}\)</span>. Roll, pitch and yaw angels in this matrix are</p>
-<p><span class="math">\(\gamma = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{23}}{\mathbf{DCM}_{33}} \right )\)</span>,</p>
-<p><span class="math">\(\beta = \arcsin (\mathbf{DCM}_{13})\)</span>,</p>
-<p><span class="math">\(\alpha = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{12}}{\mathbf{DCM}_{11}} \right )\)</span>.</p>
+<p>where <span class="math">\(\widehat{\mathbf{I}}\)</span> points to the north, <span class="math">\(\widehat{\mathbf{J}}\)</span> points to the east, <span class="math">\(\widehat{\mathbf{K}}\)</span> points to the ground and therefore <span class="math">\(\widehat{\mathbf{I}} = \widehat{\mathbf{J}} \times \widehat{\mathbf{K}}\)</span>. The figure bellow shows the vector relations</p>
+<div class="figure">
+<img src="images/dcmvectors.svg" alt="DCM vectors" /><p class="caption">DCM vectors</p>
+</div>
+<p>Roll, pitch and yaw angels in this matrix are</p>
+<p><span class="math">\(\gamma = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{32}}{\mathbf{DCM}_{33}} \right )\)</span>,</p>
+<p><span class="math">\(\beta = \arcsin (\mathbf{DCM}_{31})\)</span>,</p>
+<p><span class="math">\(\alpha = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{21}}{\mathbf{DCM}_{11}} \right )\)</span>.</p>
 <p>DCM can be computed by applying consecutive rotations over time</p>
 <p><span class="math">\(\mathbf{DCM}_{(t)}  =  \mathbf{R}_{gyro(t)} \times \mathbf{DCM}_{(t-1)}\)</span>.</p>
 <p>If the sampling rate is high enough (over 1kHz at least), this method is very accurate and has good dynamics over short periods of time, but in longer runs errors integrated during processing will cause serious drift (both numerical errors and zero offset errors). To mitigate these problems accelerometer and compass has to be used to provide the initial attitude and to fix the drift over time. Accelerometer measures external mechanical forces applied to the device together with gravitational force. However precision of these devices are generally worse and they have slower sampling rates. If there are no extern forces, it will measure the gravitational vector directly, thus providing the third row of the DCM</p>
 <p><span class="math">\(\overrightarrow{\mathbf{a}}_{acc} = g~ \widehat{\mathbf{K}}_{xyz} + \dfrac{\overrightarrow{\mathbf{F}}}{m}\)</span>,</p>
 <p><span class="math">\(\overrightarrow{\mathbf{F}} = 0 ~\rightarrow~ \widehat{\mathbf{K}}_{xyz} =  \dfrac {\overrightarrow{\mathbf{a}}_{acc}} {\left | \overrightarrow{\mathbf{a}}_{acc} \right |}\)</span>.</p>
 <p>When there is an external force <span class="math">\(\overrightarrow{\mathbf{F}}\)</span> applied, which is not parallel and has significant magnitude relative to gravitational force <span class="math">\(m\,g\,\widehat{\mathbf{K}}_{xyz}\)</span>, measurements will degrade rapidly reaching singularity during the free fall (<span class="math">\(\left | \overrightarrow{\mathbf{a}}_{acc} \right | = 0\)</span>). This error may be corrected by using device speed measured by satellite navigation system with high sample rate (over 10Hz)</p>
-<p><span class="math">\(\widehat{\mathbf{K}}_{xyz} = \dfrac {\overrightarrow{\mathbf{a}}_{acc} - \frac{\mathrm{d}}{\mathrm{d}t} {\overrightarrow{\mathbf{v}}_{GPS}}} {g}\)</span>.</p>
+<p><span class="math">\(\widehat{\mathbf{K}}_{xyz} = \dfrac {\overrightarrow{\mathbf{a}}_{acc} - \frac{\mathrm{d}}{\mathrm{d}t} {\overrightarrow{\mathbf{v}}_{SAT}}} {g}\)</span>.</p>
 <p>Magnetometer has similar properties, it measures magnetic flux density of the field the device is within. This should ideally result in a vector pointing to the north, therefore providing the first row of the DCM</p>
 <p><span class="math">\(\widehat{\mathbf{I}}_{xyz} = \dfrac {\overrightarrow{\mathbf{B}}_{corr}} {\left | \overrightarrow{\mathbf{B}}_{corr} \right |}\)</span>.</p>
 <p>Magnetometers have even slower sampling rates and far worse precision as the Earth field is distorted by nearby metal objects. This magnetic deviation can be divided into hard-iron and soft-iron effects. Hard-iron distortion is caused by materials that produces magnetic field, that is added to the Earth magnetic field. Vector of this field can be subtracted to compensate this error</p>
@@ -559,10 +690,38 @@ glBindTexture(GL_TEXTURE_EXTERNAL_OES, myTexture);</code></pre>
 <p>Further more the magnetic field of the Earth itself does not point to the geographic north, but is rotated by an angle specific to the location on the Earth surface. Magnetic inclination is the vertical portion of this rotation causing magnetic vector to incline to the ground, it may be fixed by using measurements from the accelerometer to make the magnetic vector perpendicular to the gravitational vector</p>
 <p><span class="math">\(\overrightarrow{\mathbf{B}}_{corr2} = \widehat{\mathbf{K}}_{xyz} \times \overrightarrow{\mathbf{B}}_{mag} \times \widehat{\mathbf{K}}_{xyz}\)</span>.</p>
 <p>Magnetic declination (sometimes referred as magnetic variation) is the horizontal portion of this rotation and is sometimes provided by the satellite navigation systems. To correct for this error, measured values have to be rotated by the inverse angle</p>
-<p><span class="math">\(\overrightarrow{\mathbf{B}}_{corr3} = \overrightarrow{\mathbf{B}}_{mag} \begin{bmatrix} \cos(var) &amp; \sin(var) \\ - \sin(var) &amp; \cos(var) \end{bmatrix}\)</span>.</p>
+<p><span class="math">\(\overrightarrow{\mathbf{B}}_{corr3} = \overrightarrow{\mathbf{B}}_{mag} \times \begin{bmatrix} \cos(var) &amp; - \sin(var) \\ \sin(var) &amp; \cos(var) \end{bmatrix}\)</span>.</p>
 <p>By combination of the corrected results from accelerometer and magnetometer complete DCM can be calculated. Weighted average should be used, in real-time this yields</p>
 <p><span class="math">\(\mathbf{DCM}_{(t)}  =  W_{gyro}~ (\mathbf{R}_{gyro} \times \mathbf{DCM}_{(t-1)}) + (1 - W_{gyro}) \begin{bmatrix} \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \times \widehat{\mathbf{I}}_{xyz} \\ \widehat{\mathbf{K}}_{xyz} \end{bmatrix}\)</span>,</p>
 <p>where <span class="math">\(\widehat{\mathbf{I}}_{xyz}\)</span> and <span class="math">\(\widehat{\mathbf{K}}_{xyz}\)</span> are calculated from magnetometer and accelerometer measurements. <em>W<sub>gyro</sub></em> is the weight of the gyroscope measurement, it must be estimated by trial and error to mitigate its drift but not add too much noise. The DCM rows needs to be normalized after computing the average, as the equation does not ensure it.</p>
+<h3 id="implementation-2"><a href="#implementation-2">Implementation</a></h3>
+<p>The implementation uses standard I/O operations on the device file to read measured values in predefined format. This is done synchronously in a loop running in its own thread, together with the DCM algorithm. The <code>select()</code> function is used to synchronize with the measurement rate. The application asynchronously reads actual state values from the rendering loop as illustrated in a diagram below.</p>
+<div class="figure">
+<img src="images/dcmthreads.svg" alt="DCM algorithm thread" /><p class="caption">DCM algorithm thread</p>
+</div>
+<p>A special care must be taken during the quantization as some values may be in different byte encoding. Device specific scaling and offset must also be applied, together with all measurement corrections. The matrix multiplication is implemented directly as shown in the following code sample</p>
+<pre class="sourceCode c"><code class="sourceCode c">dcm[<span class="dv">0</span>] = dcm[<span class="dv">0</span>] +
+         dcm[<span class="dv">3</span>] * (phi[<span class="dv">0</span>] * phi[<span class="dv">1</span>] + phi[<span class="dv">2</span>]) +
+         dcm[<span class="dv">6</span>] * (phi[<span class="dv">0</span>] * phi[<span class="dv">2</span>] - phi[<span class="dv">1</span>]);
+dcm[<span class="dv">1</span>] = dcm[<span class="dv">1</span>] +
+         dcm[<span class="dv">4</span>] * (phi[<span class="dv">0</span>] * phi[<span class="dv">1</span>] + phi[<span class="dv">2</span>]) +
+         dcm[<span class="dv">7</span>] * (phi[<span class="dv">0</span>] * phi[<span class="dv">2</span>] - phi[<span class="dv">1</span>]);
+dcm[<span class="dv">2</span>] = dcm[<span class="dv">2</span>] +
+         dcm[<span class="dv">5</span>] * (phi[<span class="dv">0</span>] * phi[<span class="dv">1</span>] + phi[<span class="dv">2</span>]) +
+         dcm[<span class="dv">8</span>] * (phi[<span class="dv">0</span>] * phi[<span class="dv">2</span>] - phi[<span class="dv">1</span>]);
+dcm[<span class="dv">3</span>] = dcm[<span class="dv">0</span>] * -phi[<span class="dv">2</span>] +
+         dcm[<span class="dv">3</span>] * (<span class="dv">1</span> - phi[<span class="dv">0</span>] * phi[<span class="dv">1</span>] * phi[<span class="dv">2</span>]) +
+         dcm[<span class="dv">6</span>] * (phi[<span class="dv">0</span>] + phi[<span class="dv">1</span>] * phi[<span class="dv">2</span>]);
+dcm[<span class="dv">4</span>] = dcm[<span class="dv">1</span>] * -phi[<span class="dv">2</span>] +
+         dcm[<span class="dv">4</span>] * (<span class="dv">1</span> - phi[<span class="dv">0</span>] * phi[<span class="dv">1</span>] * phi[<span class="dv">2</span>]) +
+         dcm[<span class="dv">7</span>] * (phi[<span class="dv">0</span>] + phi[<span class="dv">1</span>] * phi[<span class="dv">2</span>]);
+dcm[<span class="dv">5</span>] = dcm[<span class="dv">2</span>] * -phi[<span class="dv">2</span>] +
+         dcm[<span class="dv">5</span>] * (<span class="dv">1</span> - phi[<span class="dv">0</span>] * phi[<span class="dv">1</span>] * phi[<span class="dv">2</span>]) +
+         dcm[<span class="dv">8</span>] * (phi[<span class="dv">0</span>] + phi[<span class="dv">1</span>] * phi[<span class="dv">2</span>]);
+dcm[<span class="dv">6</span>] = dcm[<span class="dv">0</span>] * phi[<span class="dv">1</span>] + dcm[<span class="dv">3</span>] * -phi[<span class="dv">0</span>] + dcm[<span class="dv">6</span>];
+dcm[<span class="dv">7</span>] = dcm[<span class="dv">1</span>] * phi[<span class="dv">1</span>] + dcm[<span class="dv">4</span>] * -phi[<span class="dv">0</span>] + dcm[<span class="dv">7</span>];
+dcm[<span class="dv">8</span>] = dcm[<span class="dv">2</span>] * phi[<span class="dv">1</span>] + dcm[<span class="dv">5</span>] * -phi[<span class="dv">0</span>] + dcm[<span class="dv">8</span>];</code></pre>
+<p>where <code>phi</code> is the angular displacement angle.</p>
 <h2 id="satellite-navigation-subsystem"><a href="#satellite-navigation-subsystem">Satellite navigation subsystem</a></h2>
 <h3 id="communication"><a href="#communication">Communication</a></h3>
 <p>Systems such GPS uses numerous satellites orbiting Earth transmitting their position and time. Receiver can measure its position and time with accuracy based on number of satellites in view. GPS receivers usually communicate via serial line, Linux kernel features TTY module originally used for teletypewriters. It handles serial lines, converters and virtual lines with devices generally called <code>/dev/tty*</code>. Serial connections (UART, RS-232) are usually named <code>/dev/ttySn</code>, where <code>n</code> is a device number. Emulated connection are named <code>/dev/ttyUSBn</code> for USB emulators or <code>/dev/ttyACMn</code> for modem emulators. There are also pseudo terminals in <code>/dev/pts/</code> used for software emulation. This devices allows standard I/O and may be controlled with functions defined in <code>termios.h</code> or by using <a href="http://linux.die.net/man/1/stty">stty(1)</a> utility. Important physical interface settings are</p>
@@ -683,7 +842,7 @@ glBindTexture(GL_TEXTURE_EXTERNAL_OES, myTexture);</code></pre>
 <p>where <em>R</em> is the ellipsoid radius at given latitude</p>
 <p><span class="math">\(R = \dfrac{\sqrt{b^4 \sin(\varphi)^2 + a^4 \cos(\varphi)^2}}{\sqrt{b^2 \sin(\varphi)^2 + a^2 \cos(\varphi)^2}}\)</span>.</p>
 <p>Application needs to know projections of specific landmarks as normalized horizontal and vertical coordinates (in range of -1 to 1) used for rendering</p>
-<p><span class="math">\(\begin{bmatrix} x \cdot FOV_x \\ y \cdot FOV_y \end{bmatrix} =  \begin{bmatrix} \alpha_{proj} - \alpha_{dev} \\ \beta_{proj} - \beta_{dev} \end{bmatrix} \times \begin{bmatrix} \cos(\gamma_{dev}) &amp; -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) &amp; \cos(\gamma_{dev})  \end{bmatrix} \)</span>,</p>
+<p><span class="math">\(\begin{bmatrix} x \cdot FOV_x \\ y \cdot FOV_y \end{bmatrix} =  \begin{bmatrix} \cos(\gamma_{dev}) &amp; -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) &amp; \cos(\gamma_{dev})  \end{bmatrix} \times \begin{bmatrix} \alpha_{proj} - \alpha_{dev} \\ \beta_{proj} - \beta_{dev} \end{bmatrix} \)</span>,</p>
 <p>where <em>FOV</em> is the field of view, <em>dev</em> means device angle (calculated by <a href="#inertial-measurement-subsystem">inertial subsystem (2.4)</a>) and <em>proj</em> means projection angle (defined later on in this section). Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center. However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface, connecting two points with shortest route. <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html">Spherical trigonometry</a> <span class="citation">[13]</span> defines basis for orthodrome calculations. Heading changes along the route and its initial value is the horizontal projection angle</p>
 <p><span class="math">\(\alpha_{proj} = \arctan \left ( \dfrac{\sin(\lambda - \lambda_0) \cos(\varphi)} {\cos(\varphi_0) \sin(\varphi) - \sin(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0)} \right )\)</span>,</p>
 <p>the zero index refers to the device coordinate. Angular distance between those two points is</p>

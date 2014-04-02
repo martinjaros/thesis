@@ -82,8 +82,10 @@ Following channels are needed by the application:
 - `magn_x`
 - `magn_y`
 - `magn_z`
+- `pressure`
 
-representing measurements from gyroscope, accelerometer and magnetometer respectively.
+representing measurements from gyroscope, accelerometer, magnetometer and barometer respectively.
+The barometer measurements are used for altitude calculation in satellite navigation subsystem and are not taking any part in DCM algorithm.
 
 ### DCM algorithm
 
@@ -136,6 +138,10 @@ $\mathbf{DCM} = \begin{bmatrix}
 
 where $\widehat{\mathbf{I}}$ points to the north, $\widehat{\mathbf{J}}$ points to the east, $\widehat{\mathbf{K}}$ points to the ground
 and therefore $\widehat{\mathbf{I}} = \widehat{\mathbf{J}} \times \widehat{\mathbf{K}}$.
+The figure bellow shows the vector relations
+
+![DCM vectors][dcmvectors]
+
 Roll, pitch and yaw angels in this matrix are
 
 $\gamma = - \arctan_2 \left ( \dfrac {\mathbf{DCM}_{32}}{\mathbf{DCM}_{33}} \right )$,
@@ -165,7 +171,7 @@ which is not parallel and has significant magnitude relative to gravitational fo
 measurements will degrade rapidly reaching singularity during the free fall ($\left | \overrightarrow{\mathbf{a}}_{acc} \right | = 0$).
 This error may be corrected by using device speed measured by satellite navigation system with high sample rate (over 10Hz)
 
-$\widehat{\mathbf{K}}_{xyz} = \dfrac {\overrightarrow{\mathbf{a}}_{acc} - \frac{\mathrm{d}}{\mathrm{d}t} {\overrightarrow{\mathbf{v}}_{GPS}}} {g}$.
+$\widehat{\mathbf{K}}_{xyz} = \dfrac {\overrightarrow{\mathbf{a}}_{acc} - \frac{\mathrm{d}}{\mathrm{d}t} {\overrightarrow{\mathbf{v}}_{SAT}}} {g}$.
 
 Magnetometer has similar properties, it measures magnetic flux density of the field the device is within.
 This should ideally result in a vector pointing to the north, therefore providing the first row of the DCM
@@ -205,3 +211,41 @@ where $\widehat{\mathbf{I}}_{xyz}$ and $\widehat{\mathbf{K}}_{xyz}$ are calculat
 *W~gyro~* is the weight of the gyroscope measurement, it must be estimated by trial and error to mitigate its drift but not add too much noise.
 The DCM rows needs to be normalized after computing the average, as the equation does not ensure it.
 
+### Implementation
+
+The implementation uses standard I/O operations on the device file to read measured values in predefined format.
+This is done synchronously in a loop running in its own thread, together with the DCM algorithm.
+The `select()` function is used to synchronize with the measurement rate.
+The application asynchronously reads actual state values from the rendering loop as illustrated in a diagram below.
+
+![DCM algorithm thread][dcmthreads]
+
+A special care must be taken during the quantization as some values may be in different byte encoding.
+Device specific scaling and offset must also be applied, together with all measurement corrections.
+The matrix multiplication is implemented directly as shown in the following code sample
+
+```{.c}
+dcm[0] = dcm[0] +
+         dcm[3] * (phi[0] * phi[1] + phi[2]) +
+         dcm[6] * (phi[0] * phi[2] - phi[1]);
+dcm[1] = dcm[1] +
+         dcm[4] * (phi[0] * phi[1] + phi[2]) +
+         dcm[7] * (phi[0] * phi[2] - phi[1]);
+dcm[2] = dcm[2] +
+         dcm[5] * (phi[0] * phi[1] + phi[2]) +
+         dcm[8] * (phi[0] * phi[2] - phi[1]);
+dcm[3] = dcm[0] * -phi[2] +
+         dcm[3] * (1 - phi[0] * phi[1] * phi[2]) +
+         dcm[6] * (phi[0] + phi[1] * phi[2]);
+dcm[4] = dcm[1] * -phi[2] +
+         dcm[4] * (1 - phi[0] * phi[1] * phi[2]) +
+         dcm[7] * (phi[0] + phi[1] * phi[2]);
+dcm[5] = dcm[2] * -phi[2] +
+         dcm[5] * (1 - phi[0] * phi[1] * phi[2]) +
+         dcm[8] * (phi[0] + phi[1] * phi[2]);
+dcm[6] = dcm[0] * phi[1] + dcm[3] * -phi[0] + dcm[6];
+dcm[7] = dcm[1] * phi[1] + dcm[4] * -phi[0] + dcm[7];
+dcm[8] = dcm[2] * phi[1] + dcm[5] * -phi[0] + dcm[8];
+```
+
+where `phi` is the angular displacement angle.

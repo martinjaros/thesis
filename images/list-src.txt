@@ -3,4 +3,6 @@
 [pipeline]:        images/pipeline.svg
 [shaders]:         images/shaders.svg
 [hardware]:        images/hardware.svg
+[dcmvectors]:      images/dcmvectors.svg
+[dcmthreads]:      images/dcmthreads.svg
 [output]:          images/output.png

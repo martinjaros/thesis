@@ -121,3 +121,27 @@ as the USB throughput is not high enough for raw high definition video, but is s
 1080p JPEG stream decoded with this library via its GStreamer plug-in will consume about 90% of the single CPU core time (note that there are two CPU cores available).
 However, comparable to the AVC, JPEG encoding will cause visible quality degradation in the raw stream (video looks grainy).
 
+### Implementation
+
+The subsystem is implemented as a standalone module designed for synchronous operation within the rendering loop.
+This implies a constant rendering latency as the multiple of the frame sampling time
+and the number of buffers in the kernel-space to user-space queue
+
+$latency = \dfrac{n}{f_s}$.
+
+The minimum number of buffers is 3, however only two buffers are actively used.
+The first buffer being used for the drawing in the user-space and the second buffer being used for the capture in the kernel-space.
+The third extra buffer is enqueued in the kernel-space to be used after the second buffer is filled
+(more than one extra buffer may be used, usually the total number of 4 buffers are used to prevent queue underflow in the case that
+the rendering loop momentary lingers).
+The implementation uses `select()` to wait for the kernel to fill the current buffer and then rotate the buffers in the queue.
+This means that the sampling rate is the maximum value possible for the capture device hardware and the total latency is
+$2\,{{f_s}_{max}}^{-1}$. The following options are configured by the implementation
+
+ - width, height
+ - format (`"RGB4"`)
+ - interlacing
+
+The video subsystem is capable of using multiple capture devices. Two interlaced video streams per device is also possible.
+This allows implementation of stereoscopic and multilayer imaging.
+The video resolution may differ from screen resolution, but the pixel aspect ratio must match.

@@ -262,3 +262,121 @@ glBindTexture(GL_TEXTURE_EXTERNAL_OES, myTexture);
 where `dpy` is the active EGL display, `ptr` is pointer to the video buffer and `attr` is array of configuration options.
 This extension is also able to perform YUV to RGB color-space conversion in the background.
 
+### System integration
+
+Linux distributions usually use common framework for graphical applications and user interfaces.
+To integrate this project into a high level graphical user interface application,
+the `eglCreateWindowSurface()` function binds the drawing surface to a specific native window.
+For windowless drawing (such as when the application runs directly on top of the kernel) a `NULL` window is used.
+The application is built as a plug-in object, that may be bound to higher level framework such as *XLib*, *GTK+* or *Qt*,
+which defines a specific window area and pass this to the `eglCreateWindowSurface()` function.
+For example, the next code snippet shows simple *XLib* integration.
+
+```{.c}
+Display *display = XOpenDisplay(NULL);
+unsigned long color = BlackPixel(display, 0);
+Window root = RootWindow(display, 0);
+Window window =
+  XCreateSimpleWindow(display, root, 0, 0, 800, 600, 0, color, color);
+XMapWindow(display, window);
+XFlush(display);
+
+EGLConfig egl_config; // TODO: eglChooseConfig()
+EGLDisplay egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+EGLSurface egl_surface =
+  eglCreateWindowSurface(egl_display, egl_config, window, NULL);
+```
+
+The same *GTK+* application would be
+
+```{.c}
+GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+GtkWidget *video_window = gtk_drawing_area_new();
+gtk_widget_set_double_buffered(video_window, FALSE);
+gtk_container_add(GTK_CONTAINER(main_window), video_window);
+gtk_window_set_default_size(GTK_WINDOW(main_window), 640, 480);
+gtk_widget_show_all(main_window);
+
+EGLConfig egl_config; // TODO: eglChooseConfig()
+EGLDisplay egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+GdkWindow *window = gtk_widget_get_window(video_window);
+EGLSurface egl_surface =
+  eglCreateWindowSurface(egl_display, egl_config, GDK_WINDOW_XID(window), NULL);
+```
+
+And the the *Qt* application
+
+```{.cpp}
+QApplication app(0, NULL);
+QWidget window;
+window.resize(800, 600);
+window.show();
+
+EGLConfig egl_config; // TODO: eglChooseConfig()
+EGLDisplay egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+EGLSurface egl_surface =
+  eglCreateWindowSurface(egl_display, egl_config, window.winId(), NULL);
+```
+
+The `egl_config` structure is used to configure the OpenGL context, it is a NULL terminated list of attribute-value pairs.
+The following table shows some valid attributes.
+
+**Attribute**               **Value**
+--------------------------- ------------------------
+`EGL_DEPTH_SIZE`            Depth buffer size, in bits
+`EGL_RED_SIZE`              Size of the red component of the color buffer, in bits
+`EGL_GREEN_SIZE`            Size of the green component of the color buffer, in bits
+`EGL_BLUE_SIZE`             Size of the blue component of the color buffer, in bits
+`EGL_ALPHA_SIZE`            Size of the alpha component of the color buffer, in bits
+`EGL_RENDERABLE_TYPE`       `EGL_OPENGL_BIT`, `EGL_OPENGL_ES_BIT`, `EGL_OPENGL_ES2_BIT`
+`EGL_SURFACE_TYPE`          `EGL_PBUFFER_BIT`, `EGL_PIXMAP_BIT`, `EGL_WINDOW_BIT`
+
+Table: EGL attributes
+
+### Implementation
+
+The graphics subsystem is implemented as a widget oriented drawing library.
+The widget is a standalone drawable object with a common drawing interface consisting of
+
+ - drawable type (geometry primitive, vector text, image)
+ - vertex buffer object
+ - vertex number
+ - texture object
+ - drawing mode type (lines, surfaces)
+ - drawing color and texture color mask
+
+A common drawing function is implemented for all widgets, arguments of this function are:
+translation (x, y screen coordinates), scale (0-1) and rotation (0-$2\pi$).
+The translation coordinates are normalized before rendering.
+The following vertex shader is used to provide these calculations
+
+```{.c}
+attribute vec4 coord;
+uniform vec2 offset;
+uniform vec2 scale;
+uniform float rot;
+varying vec2 texpos;
+void main()
+{
+  float sinrot = sin(rot);
+  float cosrot = cos(rot);
+  vec2 pos = vec2(coord.x * cosrot - coord.y * sinrot,
+                  coord.x * sinrot + coord.y * cosrot);
+  gl_Position = vec4(pos * scale + offset, 0, 1);
+  texpos = coord.zw;
+}
+```
+
+The respective fragment shader is
+
+```{.c}
+uniform vec4 color;
+uniform vec4 mask;
+uniform sampler2D tex;
+varying vec2 texpos;
+void main()
+{
+  gl_FragColor = texture2D(tex, texpos) * mask + color;
+}
+```
+
