@@ -40,4 +40,8 @@
 [pandaboard]:      http://pandaboard.org/
 [bbb]:             http://beagleboard.org/products/beaglebone%20black
 [senshub]:         http://www.ti.com/tool/boostxl-senshub
+[geotiff]:         http://www.gisdevelopment.net/technology/ip/mi03117pf.htm
+[usgs]:            http://ned.usgs.gov/index.html
+[eurostat]:        http://epp.eurostat.ec.europa.eu/portal/page/portal/gisco_Geographical_information_maps/geodata/digital_elevation_model
+[fwtools]:         http://fwtools.maptools.org/
 

@@ -51,6 +51,7 @@ GSV   Satellites (detailed)  Satellite number, elevation, azimuth (per satellite
 GGA   Fix information        Time, latitude, longitude, altitude, fix quality
 RMC   Position data          Time, latitude, longitude, speed, track
 RMB   Navigation data        Destination, range, bearing
+WPL   Waypoint data          Latitude, longitude, name
 
 Table: Important NMEA 0183 sentences
 
@@ -97,11 +98,34 @@ The **RMB** sentence has following fields:
  * 2-3 fields resembles cross-track error, first field is the value in nautical miles, second field is `E` meaning east or `W` meaning west
  * 4th field is origin waypoint name
  * 5th field is destination waypoint name
- * 6-9 fields are destination waypoint latitude and longitude with same formatting as in GGA sentence
+ * 6-9 fields are destination waypoint latitude and longitude with the same formatting as in the GGA sentence
  * 10th field is range to destination in nautical miles
  * 11th field is bearing to destination in degrees
  * 12th field is velocity towards destination in knots
  * 13th field is `A` for arrived or `V` for not arrived to destination
+
+The **WPL** sentence has following fields:
+
+ * 1-2 fields are waypoint coordinates with the same formatting as in the GGA sentence
+ * 3rd field is a string describing the waypoint name
+
+Many navigation systems use proprietary sentences, they begin with the *P* prefix.
+For example some Garmin products specific sentences [@Garmin] are listed in the following table.
+
+Name  Description            Important information
+----- ---------------------- ----------------------
+PGRME Estimated error        Horizontal, vertical position error
+PGRMF Fix data               Date, time, latitude, longitude, speed, course
+PGRMH VNAV data              Vertical speed, vertical speed to waypoint, height above terrain
+PGRMT Sensor status          State information, ambient temperature
+PGRMV 3D velocity vector     North, east, up velocity
+PGRMZ Altitude               Altitude
+
+Table: Garmin proprietary sentences
+
+Sending data to the device is also possible, there are two useful sentences.
+The PGRMC sentence configures the device including the baud-rate,
+the PGRMO sentence enables / disables specific sentences.
 
 ### Navigation
 
@@ -129,15 +153,29 @@ Device position measured by GPS is defined by its geodetic latitude, longitude a
 $h_{AMSL} = h_{WGS84} - h_{EGM96}$
 
 measured as height above mean see level, where $h_{WGS84}$ is the height above reference ellipsoid and
-$h_{EGM96}$ is the height above geoid. As GPS sensors usually send fix information at low rates,
-position needs to be interpolated between fixes.
-If current ground speed $v_{GND}$ and course $\alpha_{TRK}$ are known, the interpolated position in next step will be
+$h_{EGM96}$ is the height above geoid. GPS sensors usually send fix information at low rates
+and with high noise. Position needs to be interpolated and filtered between fixes.
+To improve precision and especially dynamic response position
+information may be augmented with inertial measurements.
+The current speed vector can be calculated as
 
-$\varphi_{(t+1)} = \varphi_{(t)} + \dfrac{\cos(\alpha_{TRK}) \cdot v_{GND} \cdot _\Delta t}{R_{(\varphi)}}$,
+$\overrightarrow{v}_{(t)} = W_{SAT} \begin{bmatrix}
+v_{GND} \cos(\alpha_{TRK}) \\
+v_{GND} \sin(\alpha_{TRK}) \\
+h_{baro(t)} - h_{baro(t-_\Delta t)}
+\end{bmatrix} + (1-W_{SAT}) \overrightarrow{v}_{(t-_\Delta t)} + \mathbf{DCM} \times \overrightarrow{\mathbf{a}}_{acc} \cdot _\Delta t$,
 
-$\lambda_{(t+1)} = \lambda_{(t)} + \dfrac{\sin(\alpha_{TRK}) \cdot v_{GND} \cdot _\Delta t}{R_{(\varphi)} \cdot \cos(\varphi)}$,
+where $W_{SAT}$ is the weight of the satellite measurement, $v_{GND}$ and $\alpha_{TRK}$ are speed and track angle from RMC sentence,
+$h_{baro}$ and $\mathbf{a}_{acc}$ are inertial measurements.
+The interpolated position in the current step will be
 
-where *R* is the ellipsoid radius at given latitude
+$\varphi_{(t)} = W_{SAT} \cdot \varphi_{SAT} + (1-W_{SAT}) \cdot \varphi_{(t-_\Delta t)} + \dfrac{v_{x(t)} \cdot _\Delta t}{R_{(\varphi)}}$,
+
+$\lambda_{(t)} = W_{SAT} \cdot \lambda_{SAT} + (1-W_{SAT}) \cdot \lambda_{(t-_\Delta t)} + \dfrac{v_{y(t)} \cdot _\Delta t}{R_{(\varphi)} \cdot \cos(\varphi)}$,
+
+$h_{(t)} = W_{SAT} \cdot h_{SAT} + (1-W_{SAT}) \cdot h_{(t-_\Delta t)} + v_{z(t)} \cdot _\Delta t$,
+
+where *R* is the ellipsoid radius at the given latitude
 
 $R = \dfrac{\sqrt{b^4 \sin(\varphi)^2 + a^4 \cos(\varphi)^2}}{\sqrt{b^2 \sin(\varphi)^2 + a^2 \cos(\varphi)^2}}$.
 
@@ -201,4 +239,64 @@ With the approximation of local flat Earth surface perpendicular to the normal, 
 $\beta_{proj} \doteq \arctan \left ( \dfrac{h - h_0}{d} \right )$.
 
 This approximation will fail at higher altitudes when the visibility range is high enough to make the Earth curvature observable.
+
+### Elevation mapping
+
+Waypoints are usually defined only by latitude and longitude, as their altitude equals terrain altitude (for example the WPL sentence).
+To determine the terrain topology, elevation map may be used. This is a scalar field usually encapsulated into raster image with meta-data.
+[GeoTIFF][geotiff] [@GeoTIFF] is a standardized format defining georeferencing information within a TIFF file.
+Digital elevation models in this format are available for example at [USGS][usgs] (United States) or [Eurostat][eurostat] (Europe).
+There are several tools for working with this format, for example the [FWTools][fwtools] open source GIS binary kit.
+To export quantized pixel map from the elevation model, the toolkit comes with the *gdal_translate* utility.
+The following command will generate PNG image of the South Moravian Region of the Czech Republic
+
+```
+gdal_translate eudem_dem_5deg_n45e015.tif dem48_50n15_18e.png \
+ -srcwin 0 0 10800 7200 -ot UInt16 -of PNG -scale 0 1000 0 65535
+```
+
+This file can be read by the *libpng* library
+
+```{.c}
+FILE *f = fopen("dem48_50n15_18e.png", "rb");
+png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+png_infop info = png_create_info_struct(png);
+png_init_io(png, f);
+png_read_info(png, info);
+size_t num = png_get_image_height(png, info);
+size_t len = png_get_rowbytes(png, info);
+png_bytep *p = malloc(num * sizeof(png_bytep));
+int i; for(i = 0; i < num; i++) p[i] = malloc(len);
+png_read_image(png, p);
+```
+<!---->
+
+Then to calculate the actual elevation at the given coordinates
+
+```{.c}
+#define LEFT   15    // degrees east
+#define RIGHT  18    // degrees east
+#define TOP    50    // degrees north
+#define BOTTOM 48    // degrees north
+#define WIDTH  10800 // pixels
+#define HEIGHT 7200  // pixels
+#define SCALE  1000  // meters per 0xFFFF
+int x = (lon - LEFT) / (RIGHT - LEFT) * WIDTH + 0.5;
+int y = (TOP - lat) / (TOP - BOTTOM) * HEIGHT + 0.5;
+double value = (double)(((uint16_t)p[y][x * 2] << 8) |
+                         (uint16_t)p[y][x * 2 + 1]) / 0xFFFF * SCALE;
+```
+<!---->
+
+This value should be bi-linearly interpolated across the four neighboring pixels located at the
+nearest integer values *x~1~*, *x~2~*, *y~1~*, *y~2~*.
+The intermediate linear interpolation is calculated as
+
+$f_{(x,y_1)} = \dfrac{x_2 - x}{x_2 - x_1} f_{(x_1,y_1)} + \dfrac{x - x_1}{x_2 - x_1} f_{(x_2,y_1)}$,
+
+$f_{(x,y_2)} = \dfrac{x_2 - x}{x_2 - x_1} f_{(x_1,y_2)} + \dfrac{x - x_1}{x_2 - x_1} f_{(x_2,y_2)}$.
+
+The final value would then be
+
+$f(x,y) = \dfrac{y_2 - y}{y_2 - y_1} f_{(x,y_1)} + \dfrac{y - y_1}{y_2 - y_1} f_{(x,y_2)}$.
 
