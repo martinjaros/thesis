@@ -5,4 +5,6 @@
 [hardware]:        images/hardware.pdf
 [dcmvectors]:      images/dcmvectors.pdf
 [dcmthreads]:      images/dcmthreads.pdf
+[hangle]:          images/hangle.pdf
+[vangle]:          images/vangle.pdf
 [output]:          images/output.png

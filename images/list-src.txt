@@ -5,4 +5,6 @@
 [hardware]:        images/hardware.svg
 [dcmvectors]:      images/dcmvectors.svg
 [dcmthreads]:      images/dcmthreads.svg
+[hangle]:          images/hangle.svg
+[vangle]:          images/vangle.svg
 [output]:          images/output.png

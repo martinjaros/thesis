@@ -205,7 +205,11 @@ where *FOV* is the field of view, *dev* means device angle (calculated by [inert
 *proj* means projection angle (defined later on in this section).
 Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center.
 However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface,
-connecting two points with shortest route. [Spherical trigonometry][sphtrig] [@SphTrig] defines basis for orthodrome calculations.
+connecting two points with shortest route. [Spherical trigonometry][sphtrig] [@SphTrig] defines basis for orthodrome calculations,
+shown in the illustration below.
+
+![Horizontal projection angle][hangle]
+
 Heading changes along the route and its initial value is the horizontal projection angle
 
 $\alpha_{proj} = \arctan \left ( \dfrac{\sin(\lambda - \lambda_0) \cos(\varphi)}
@@ -217,8 +221,12 @@ $\phi = \arccos(\sin(\varphi_0) \sin(\varphi) + \cos(\varphi_0) \cos(\varphi) \c
 
 Vertical projection angle is the angle between the horizon (perpendicular to normal) and
 a line directly connecting the points.
-Lets construct a triangle connecting the points with the center of the reference ellipsoid,
-assuming zero flattening, so the normals have intersection in the center ($f = 0 \rightarrow e = 0 \rightarrow \psi = \varphi$).
+Lets construct a triangle connecting the points with the center of the reference ellipsoid as in the illustration below.
+Zero flattening is assumed, so the normals have intersection in the center ($f = 0 \rightarrow e = 0 \rightarrow \psi = \varphi$).
+
+![Vertical projection angle][vangle]
+
+The triangle sides are
 
 $a_\Delta = h_0 + R_{(\varphi_0)}$,
 
@@ -237,7 +245,7 @@ Simplified heading along the line is
 
 $\alpha_{proj} \doteq \arctan \left ( \dfrac{\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0)}{\varphi - \varphi_0} \right )$.
 
-Note that loxodrome approximation will fail horribly near poles as the curve will run circles around the pole.
+Note that [loxodrome approximation][rhumb] will fail horribly near poles as the curve will run circles around the pole [@MapProjections].
 Angular distance along loxodrome is
 
 $\phi \doteq \sqrt{(\varphi - \varphi_0)^2 + (\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0))^2}$

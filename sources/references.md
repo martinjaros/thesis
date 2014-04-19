@@ -44,4 +44,5 @@
 [usgs]:            http://ned.usgs.gov/index.html
 [eurostat]:        http://epp.eurostat.ec.europa.eu/portal/page/portal/gisco_Geographical_information_maps/geodata/digital_elevation_model
 [fwtools]:         http://fwtools.maptools.org/
+[rhumb]:           http://www.progonos.com/furuti/MapProj/Normal/CartProp/Rhumb/rhumb.html
 
