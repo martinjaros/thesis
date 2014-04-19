@@ -71,7 +71,6 @@ The vertex shader processes geometry defined as array of verticies, it is execut
 Result verticies are rasterized into fragments and then fragment shader is executed per fragment.
 Result fragments are then written into the framebuffer, each shader execution is done in parallel.
 Following figure shows how data are processed by the shader program.
-\clearpage
 
 ![OpenGL ES shader program][shaders]
 
@@ -79,6 +78,7 @@ GPU uses its own memory, it may be physically shared with the system memory,
 but is not directly accessible by the application.
 Verticies are stored in the GPU memory in vertex buffer objects (VBO),
 following API function are available:
+\clearpage
 
 **Function**                  **Description**
 ----------------------------- ----------------
@@ -102,7 +102,6 @@ they are interpolated between verticies during the rasterization.
 Fragment shaders may use textures to to calculate fragment color,
 textures are stored in the GPU memory and loaded by the application.
 Following functions are available in the API:
-\clearpage
 
 **Function**                **Description**
 --------------------------- ----------------

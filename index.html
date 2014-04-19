@@ -62,6 +62,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <li><a href="#satellite-navigation-subsystem">Satellite navigation subsystem</a><ul>
 <li><a href="#communication">Communication</a></li>
 <li><a href="#navigation">Navigation</a></li>
+<li><a href="#elevation-mapping">Elevation mapping</a></li>
 </ul></li>
 <li><a href="#output-creation">Output creation</a></li>
 </ul></li>
@@ -144,7 +145,34 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p><code class="sourceCode c"><span class="dt">int</span> buffer[<span class="dv">1</span>];</code><br /><code class="sourceCode c">ssize_t num = read(fd, buffer, <span class="kw">sizeof</span>(buffer));</code></p>
 <p>will copy this value to the buffer. Copying causes performance issues if there are very large amounts of data. To access this data directly without copying them, application has to map physical memory used by the driver. This allows for example direct access to a DMA channel, it should be noted that this memory may still be needed by kernel, so there should be some kind of dynamic access restriction, possibly via <em>ioctl</em> requests (this would be driver specific).</p>
 <h2 id="video-subsystem"><a href="#video-subsystem">Video subsystem</a></h2>
-<p>Video support in Linux kernel is maintained by the <a href="http://linuxtv.org">LinuxTV</a> project, it implements the <code>videodev2</code> kernel module and defines the <em>V4L2</em> interface. Modules are part of the mainline kernel at <code>drivers/media/video/*</code> with header <code>linux/videodev2.h</code>. The core module is enabled by the <code>VIDEO_V4L2</code> configuration option, specific device drivers should be enabled by their respective options. V4L2 is the latest revision and is the most widespread video interface throughout Linux, drives are available from most hardware manufactures and usually mainlined or available as patches. The <a href="http://linuxtv.org/downloads/v4l-dvb-apis">Linux Media Infrastructure API</a> <span class="citation">[5]</span> is a well documented interface shared by all devices. It provides abstraction layer for various device implementations, separating the platform details from the applications. Each video device has its device file and is controlled via <em>ioctl</em> calls. For streaming, standard I/O functions are supported, but the memory mapping is preferred, this allows passing only pointers between the application and the kernel, instead of unnecessary copying the data around. Available <em>ioctl</em> calls are:</p>
+<p>Video support in Linux kernel is maintained by the <a href="http://linuxtv.org">LinuxTV</a> project, it implements the <code>videodev2</code> kernel module and defines the <em>V4L2</em> interface. Modules are part of the mainline kernel at <code>drivers/media/video/*</code> with header <code>linux/videodev2.h</code>. The core module is enabled by the <code>VIDEO_V4L2</code> configuration option, specific device drivers should be enabled by their respective options. V4L2 is the latest revision and is the most widespread video interface throughout Linux, drives are available from most hardware manufactures and usually mainlined or available as patches. The <a href="http://linuxtv.org/downloads/v4l-dvb-apis">Linux Media Infrastructure API</a> <span class="citation">[5]</span> is a well documented interface shared by all devices. It provides abstraction layer for various device implementations, separating the platform details from the applications. Individual devices are implemented in their specific drivers. These usually exports some configuration options, controllable with the <code>uvcdynctrl</code> utility tool. To list available video devices use</p>
+<p><code class="sourceCode bash"><span class="kw">uvcdynctrl</span> -l</code></p>
+<p>To list available frame formats supported by the device use</p>
+<p><code class="sourceCode bash"><span class="kw">uvcdynctrl</span> -d DEVICE_NAME -fv</code></p>
+<p>where <code>DEVICE_NAME</code> is the name returned by previous command. To list available controls exported by the driver use</p>
+<p><code class="sourceCode bash"><span class="kw">uvcdynctrl</span> -d DEVICE_NAME -cv</code></p>
+<p>To read value of the specific control use</p>
+<p><code class="sourceCode bash"><span class="kw">uvcdynctrl</span> -d DEVICE_NAME -g <span class="st">&quot;CONTROL_NAME&quot;</span></code></p>
+<p>To change the value of the control use</p>
+<p><code class="sourceCode bash"><span class="kw">uvcdynctrl</span> -d DEVICE_NAME -s <span class="st">&quot;CONTROL_NAME&quot;</span> -- VALUE</code></p>
+<p>Typical list of controls include</p>
+<ul>
+<li><code>&quot;Brightness&quot;</code></li>
+<li><code>&quot;Contrast&quot;</code></li>
+<li><code>&quot;Saturation&quot;</code></li>
+<li><code>&quot;Hue&quot;</code></li>
+<li><code>&quot;Gamma&quot;</code></li>
+<li><code>&quot;White Balance Temperature, Auto&quot;</code></li>
+<li><code>&quot;White Balance Temperature&quot;</code></li>
+<li><code>&quot;Backlight Compensation&quot;</code></li>
+<li><code>&quot;Sharpness&quot;</code></li>
+<li><code>&quot;Exposure, Auto&quot;</code></li>
+<li><code>&quot;Exposure (Absolute)&quot;</code></li>
+<li><code>&quot;Focus, Auto&quot;</code></li>
+<li><code>&quot;Focus (absolute)&quot;</code></li>
+</ul>
+<p>Auto focus usually gives poor quality for outdoor usage so infinite absolute focus should be set. The sharpness refers to a proprietary image enhancement algorithms which may sometimes give over-enhanced feeling of the image.</p>
+<p>Each video device has its device file and is controlled via <em>ioctl</em> calls. For streaming, standard I/O functions are supported, but the memory mapping is preferred, this allows passing only pointers between the application and the kernel, instead of unnecessary copying the data around. Available <em>ioctl</em> calls are:</p>
 <table>
 <caption>V4L2 ioctl calls defined in <code>linux/videodev2.h</code></caption>
 <thead>
@@ -341,11 +369,11 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </tr>
 </tbody>
 </table>
-<p>The vertex shader processes geometry defined as array of verticies, it is executed per vertex. Result verticies are rasterized into fragments and then fragment shader is executed per fragment. Result fragments are then written into the framebuffer, each shader execution is done in parallel. Following figure shows how data are processed by the shader program. </p>
+<p>The vertex shader processes geometry defined as array of verticies, it is executed per vertex. Result verticies are rasterized into fragments and then fragment shader is executed per fragment. Result fragments are then written into the framebuffer, each shader execution is done in parallel. Following figure shows how data are processed by the shader program.</p>
 <div class="figure">
 <img src="images/shaders.svg" alt="OpenGL ES shader program" /><p class="caption">OpenGL ES shader program</p>
 </div>
-<p>GPU uses its own memory, it may be physically shared with the system memory, but is not directly accessible by the application. Verticies are stored in the GPU memory in vertex buffer objects (VBO), following API function are available:</p>
+<p>GPU uses its own memory, it may be physically shared with the system memory, but is not directly accessible by the application. Verticies are stored in the GPU memory in vertex buffer objects (VBO), following API function are available: </p>
 <table>
 <caption>OpenGL functions for working with VBOs</caption>
 <thead>
@@ -381,7 +409,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </tr>
 </tbody>
 </table>
-<p>Shader programs have three types of variables, attributes, uniforms and varyings. Attributes are read from the attribute array which is bound to the VBO. Each vertex from the array is processed separately by each shader execution, having its value accessible by the attribute variables. Uniforms can be assigned directly by the application using <code>glUniform()</code>, they are read-only by the shader and they are shared by each execution. Varyings are used to pass variables from vertex shader to fragment shader, they are interpolated between verticies during the rasterization. Fragment shaders may use textures to to calculate fragment color, textures are stored in the GPU memory and loaded by the application. Following functions are available in the API: </p>
+<p>Shader programs have three types of variables, attributes, uniforms and varyings. Attributes are read from the attribute array which is bound to the VBO. Each vertex from the array is processed separately by each shader execution, having its value accessible by the attribute variables. Uniforms can be assigned directly by the application using <code>glUniform()</code>, they are read-only by the shader and they are shared by each execution. Varyings are used to pass variables from vertex shader to fragment shader, they are interpolated between verticies during the rasterization. Fragment shaders may use textures to to calculate fragment color, textures are stored in the GPU memory and loaded by the application. Following functions are available in the API:</p>
 <table>
 <caption>OpenGL functions for working with textures</caption>
 <thead>
@@ -776,6 +804,11 @@ dcm[<span class="dv">8</span>] = dcm[<span class="dv">2</span>] * phi[<span clas
 <td align="left">Navigation data</td>
 <td align="left">Destination, range, bearing</td>
 </tr>
+<tr class="even">
+<td align="left">WPL</td>
+<td align="left">Waypoint data</td>
+<td align="left">Latitude, longitude, name</td>
+</tr>
 </tbody>
 </table>
 <p>The <strong>GSA</strong> sentence has following fields:</p>
@@ -821,14 +854,112 @@ dcm[<span class="dv">8</span>] = dcm[<span class="dv">2</span>] * phi[<span clas
 <li>2-3 fields resembles cross-track error, first field is the value in nautical miles, second field is <code>E</code> meaning east or <code>W</code> meaning west</li>
 <li>4th field is origin waypoint name</li>
 <li>5th field is destination waypoint name</li>
-<li>6-9 fields are destination waypoint latitude and longitude with same formatting as in GGA sentence</li>
+<li>6-9 fields are destination waypoint latitude and longitude with the same formatting as in the GGA sentence</li>
 <li>10th field is range to destination in nautical miles</li>
 <li>11th field is bearing to destination in degrees</li>
 <li>12th field is velocity towards destination in knots</li>
 <li>13th field is <code>A</code> for arrived or <code>V</code> for not arrived to destination</li>
 </ul>
+<p>The <strong>WPL</strong> sentence has following fields:</p>
+<ul>
+<li>1-2 fields are waypoint coordinates with the same formatting as in the GGA sentence</li>
+<li>3rd field is a waypoint identifier string</li>
+</ul>
+<p>Many navigation systems use proprietary sentences, they begin with the <em>P</em> prefix. For example some Garmin products specific sentences <span class="citation">[12]</span> are listed in the following table.</p>
+<table>
+<caption>Garmin proprietary sentences</caption>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Description</th>
+<th align="left">Important information</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">PGRME</td>
+<td align="left">Estimated error</td>
+<td align="left">Horizontal, vertical position error</td>
+</tr>
+<tr class="even">
+<td align="left">PGRMF</td>
+<td align="left">Fix data</td>
+<td align="left">Date, time, latitude, longitude, speed, course</td>
+</tr>
+<tr class="odd">
+<td align="left">PGRMH</td>
+<td align="left">VNAV data</td>
+<td align="left">Vertical speed, vertical speed to waypoint, height above terrain</td>
+</tr>
+<tr class="even">
+<td align="left">PGRMT</td>
+<td align="left">Sensor status</td>
+<td align="left">State information, ambient temperature</td>
+</tr>
+<tr class="odd">
+<td align="left">PGRMV</td>
+<td align="left">3D velocity vector</td>
+<td align="left">North, east, up velocity</td>
+</tr>
+<tr class="even">
+<td align="left">PGRMZ</td>
+<td align="left">Altitude</td>
+<td align="left">Altitude</td>
+</tr>
+</tbody>
+</table>
+<p>Sending data to the device is also possible, there are two useful sentences. The PGRMC sentence configures the device including the baud-rate, the PGRMO sentence enables / disables specific sentences. This is important as the data rate must fit available bandwidth and therefore limiting the sentence interval. Typical default baudrate is only 4800, the table bellow shows approximate data rates when the baudrate is increased.</p>
+<table>
+<caption>NMEA 0183 data throughput</caption>
+<thead>
+<tr class="header">
+<th align="right">Baudrate</th>
+<th align="left">Sentences enabled</th>
+<th align="right">Max length</th>
+<th align="right">Records per second</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">4800</td>
+<td align="left">GPGGA, GPRMB, GPRMC</td>
+<td align="right">180</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="right">4800</td>
+<td align="left">PGRME, PGRMF, PGRMT</td>
+<td align="right">167</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="right">4800</td>
+<td align="left">GPGSA, GPGSV, GPGGA, GPRMB, GPRMC</td>
+<td align="right">310</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">9600</td>
+<td align="left">GPGSA, GPGSV, GPGGA, GPRMB, GPRMC</td>
+<td align="right">310</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="right">9600</td>
+<td align="left">PGRME, PGRMF, PGRMT</td>
+<td align="right">167</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="right">19200</td>
+<td align="left">GPGSA, GPGSV, GPGGA, GPRMB, GPRMC</td>
+<td align="right">310</td>
+<td align="right">6</td>
+</tr>
+</tbody>
+</table>
 <h3 id="navigation"><a href="#navigation">Navigation</a></h3>
-<p>As Earth shape is very complex, there are two layers of approximation used for computing position. Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water. Most recent geoid model is EGM96 which is used together with <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">WGS84 reference ellipsoid</a> <span class="citation">[12]</span>. This ellipsoid has semi-major axis of <span class="math">\(a = 6378137\)</span> meters and flattening <span class="math">\(f = 1/298.257223563\)</span>. Note that ellipsoid flattening is defined as</p>
+<p>As Earth shape is very complex, there are two layers of approximation used for computing position. Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water. Most recent geoid model is EGM96 which is used together with <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">WGS84 reference ellipsoid</a> <span class="citation">[13]</span>. This ellipsoid has semi-major axis of <span class="math">\(a = 6378137\)</span> meters and flattening <span class="math">\(f = 1/298.257223563\)</span>. Note that ellipsoid flattening is defined as</p>
 <p><span class="math">\(f = \dfrac{a - b}{a}\)</span>,</p>
 <p>where <em>b</em> is the semi-minor axis. The eccentricity is defined as</p>
 <p><span class="math">\(e = 2f - f^2\)</span>.</p>
@@ -836,14 +967,17 @@ dcm[<span class="dv">8</span>] = dcm[<span class="dv">2</span>] * phi[<span clas
 <p><span class="math">\(\psi = \arctan [ (1-e)^2 \tan(\varphi)]\)</span>.</p>
 <p>Device position measured by GPS is defined by its geodetic latitude, longitude and altitude</p>
 <p><span class="math">\(h_{AMSL} = h_{WGS84} - h_{EGM96}\)</span></p>
-<p>measured as height above mean see level, where <span class="math">\(h_{WGS84}\)</span> is the height above reference ellipsoid and <span class="math">\(h_{EGM96}\)</span> is the height above geoid. As GPS sensors usually send fix information at low rates, position needs to be interpolated between fixes. If current ground speed <span class="math">\(v_{GND}\)</span> and course <span class="math">\(\alpha_{TRK}\)</span> are known, the interpolated position in next step will be</p>
-<p><span class="math">\(\varphi_{(t+1)} = \varphi_{(t)} + \dfrac{\cos(\alpha_{TRK}) \cdot v_{GND} \cdot _\Delta t}{R_{(\varphi)}}\)</span>,</p>
-<p><span class="math">\(\lambda_{(t+1)} = \lambda_{(t)} + \dfrac{\sin(\alpha_{TRK}) \cdot v_{GND} \cdot _\Delta t}{R_{(\varphi)} \cdot \cos(\varphi)}\)</span>,</p>
-<p>where <em>R</em> is the ellipsoid radius at given latitude</p>
+<p>measured as height above mean see level, where <span class="math">\(h_{WGS84}\)</span> is the height above reference ellipsoid and <span class="math">\(h_{EGM96}\)</span> is the height above geoid. GPS sensors usually send fix information at low rates and with high noise. Position needs to be interpolated and filtered between fixes. To improve precision and especially dynamic response position information may be augmented with inertial measurements. The current speed vector can be calculated as</p>
+<p><span class="math">\(\overrightarrow{v}_{(t)} = W_{SAT} \begin{bmatrix} v_{GND} \cos(\alpha_{TRK}) \\ v_{GND} \sin(\alpha_{TRK}) \\ h_{baro(t)} - h_{baro(t-_\Delta t)} \end{bmatrix} + (1-W_{SAT}) \overrightarrow{v}_{(t-_\Delta t)} + \mathbf{DCM} \times \overrightarrow{\mathbf{a}}_{acc} \cdot _\Delta t\)</span>,</p>
+<p>where <span class="math">\(W_{SAT}\)</span> is the weight of the satellite measurement, <span class="math">\(v_{GND}\)</span> and <span class="math">\(\alpha_{TRK}\)</span> are speed and track angle from RMC sentence, <span class="math">\(h_{baro}\)</span> and <span class="math">\(\mathbf{a}_{acc}\)</span> are inertial measurements. The interpolated position in the current step will be</p>
+<p><span class="math">\(\varphi_{(t)} = W_{SAT} \cdot \varphi_{SAT} + (1-W_{SAT}) \cdot \varphi_{(t-_\Delta t)} + \dfrac{v_{x(t)} \cdot _\Delta t}{R_{(\varphi)}}\)</span>,</p>
+<p><span class="math">\(\lambda_{(t)} = W_{SAT} \cdot \lambda_{SAT} + (1-W_{SAT}) \cdot \lambda_{(t-_\Delta t)} + \dfrac{v_{y(t)} \cdot _\Delta t}{R_{(\varphi)} \cdot \cos(\varphi)}\)</span>,</p>
+<p><span class="math">\(h_{(t)} = W_{SAT} \cdot h_{SAT} + (1-W_{SAT}) \cdot h_{(t-_\Delta t)} + v_{z(t)} \cdot _\Delta t\)</span>,</p>
+<p>where <em>R</em> is the ellipsoid radius at the given latitude</p>
 <p><span class="math">\(R = \dfrac{\sqrt{b^4 \sin(\varphi)^2 + a^4 \cos(\varphi)^2}}{\sqrt{b^2 \sin(\varphi)^2 + a^2 \cos(\varphi)^2}}\)</span>.</p>
 <p>Application needs to know projections of specific landmarks as normalized horizontal and vertical coordinates (in range of -1 to 1) used for rendering</p>
 <p><span class="math">\(\begin{bmatrix} x \cdot FOV_x \\ y \cdot FOV_y \end{bmatrix} =  \begin{bmatrix} \cos(\gamma_{dev}) &amp; -\sin(\gamma_{dev}) \\ \sin(\gamma_{dev}) &amp; \cos(\gamma_{dev})  \end{bmatrix} \times \begin{bmatrix} \alpha_{proj} - \alpha_{dev} \\ \beta_{proj} - \beta_{dev} \end{bmatrix} \)</span>,</p>
-<p>where <em>FOV</em> is the field of view, <em>dev</em> means device angle (calculated by <a href="#inertial-measurement-subsystem">inertial subsystem (2.4)</a>) and <em>proj</em> means projection angle (defined later on in this section). Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center. However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface, connecting two points with shortest route. <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html">Spherical trigonometry</a> <span class="citation">[13]</span> defines basis for orthodrome calculations. Heading changes along the route and its initial value is the horizontal projection angle</p>
+<p>where <em>FOV</em> is the field of view, <em>dev</em> means device angle (calculated by <a href="#inertial-measurement-subsystem">inertial subsystem (2.4)</a>) and <em>proj</em> means projection angle (defined later on in this section). Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center. However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface, connecting two points with shortest route. <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html">Spherical trigonometry</a> <span class="citation">[14]</span> defines basis for orthodrome calculations. Heading changes along the route and its initial value is the horizontal projection angle</p>
 <p><span class="math">\(\alpha_{proj} = \arctan \left ( \dfrac{\sin(\lambda - \lambda_0) \cos(\varphi)} {\cos(\varphi_0) \sin(\varphi) - \sin(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0)} \right )\)</span>,</p>
 <p>the zero index refers to the device coordinate. Angular distance between those two points is</p>
 <p><span class="math">\(\phi = \arccos(\sin(\varphi_0) \sin(\varphi) + \cos(\varphi_0) \cos(\varphi) \cos(\lambda - \lambda_0))\)</span>.</p>
@@ -861,6 +995,42 @@ dcm[<span class="dv">8</span>] = dcm[<span class="dv">2</span>] * phi[<span clas
 <p>assuming flattening difference is close to zero, so <em>R</em> is constant along the curve. With the approximation of local flat Earth surface perpendicular to the normal, the simplified vertical projection angle is</p>
 <p><span class="math">\(\beta_{proj} \doteq \arctan \left ( \dfrac{h - h_0}{d} \right )\)</span>.</p>
 <p>This approximation will fail at higher altitudes when the visibility range is high enough to make the Earth curvature observable.</p>
+<h3 id="elevation-mapping"><a href="#elevation-mapping">Elevation mapping</a></h3>
+<p>Waypoints are usually defined only by latitude and longitude, as their altitude equals terrain altitude (for example the WPL sentence). To determine the terrain topology, elevation map may be used. This is a scalar field usually encapsulated into raster image with meta-data. <a href="http://www.gisdevelopment.net/technology/ip/mi03117pf.htm">GeoTIFF</a> <span class="citation">[15]</span> is a standardized format defining georeferencing information within a TIFF file. Digital elevation models in this format are available for example at <a href="http://ned.usgs.gov/index.html">USGS</a> (United States) or <a href="http://epp.eurostat.ec.europa.eu/portal/page/portal/gisco_Geographical_information_maps/geodata/digital_elevation_model">Eurostat</a> (Europe). There are several tools for working with this format, for example the <a href="http://fwtools.maptools.org/">FWTools</a> open source GIS binary kit. To export quantized pixel map from the elevation model, the toolkit comes with the <em>gdal_translate</em> utility. The following command will generate PNG image of the South Moravian Region of the Czech Republic</p>
+<pre><code>gdal_translate eudem_dem_5deg_n45e015.tif dem48_50n15_18e.png \
+ -srcwin 0 0 10800 7200 -ot UInt16 -of PNG -scale 0 1000 0 65535</code></pre>
+<p>This file can be read by the <em>libpng</em> library</p>
+<pre class="sourceCode c"><code class="sourceCode c">FILE *f = fopen(<span class="st">&quot;dem48_50n15_18e.png&quot;</span>, <span class="st">&quot;rb&quot;</span>);
+png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+png_infop info = png_create_info_struct(png);
+png_init_io(png, f);
+png_read_info(png, info);
+size_t num = png_get_image_height(png, info);
+size_t len = png_get_rowbytes(png, info);
+png_bytep *p = malloc(num * <span class="kw">sizeof</span>(png_bytep));
+<span class="dt">int</span> i; <span class="kw">for</span>(i = <span class="dv">0</span>; i &lt; num; i++) p[i] = malloc(len);
+png_read_image(png, p);</code></pre>
+<!---->
+
+<p>Then to calculate the actual elevation at the given coordinates</p>
+<pre class="sourceCode c"><code class="sourceCode c"><span class="ot">#define LEFT   15    </span><span class="co">// degrees east</span>
+<span class="ot">#define RIGHT  18    </span><span class="co">// degrees east</span>
+<span class="ot">#define TOP    50    </span><span class="co">// degrees north</span>
+<span class="ot">#define BOTTOM 48    </span><span class="co">// degrees north</span>
+<span class="ot">#define WIDTH  10800 </span><span class="co">// pixels</span>
+<span class="ot">#define HEIGHT 7200  </span><span class="co">// pixels</span>
+<span class="ot">#define SCALE  1000  </span><span class="co">// meters per 0xFFFF</span>
+<span class="dt">int</span> x = (lon - LEFT) / (RIGHT - LEFT) * WIDTH + <span class="fl">0.5</span>;
+<span class="dt">int</span> y = (TOP - lat) / (TOP - BOTTOM) * HEIGHT + <span class="fl">0.5</span>;
+<span class="dt">double</span> value = (<span class="dt">double</span>)(((<span class="dt">uint16_t</span>)p[y][x * <span class="dv">2</span>] &lt;&lt; <span class="dv">8</span>) |
+                         (<span class="dt">uint16_t</span>)p[y][x * <span class="dv">2</span> + <span class="dv">1</span>]) / <span class="bn">0xFFFF</span> * SCALE;</code></pre>
+<!---->
+
+<p>This value should be bi-linearly interpolated across the four neighboring pixels located at the nearest integer values <em>x<sub>1</sub></em>, <em>x<sub>2</sub></em>, <em>y<sub>1</sub></em>, <em>y<sub>2</sub></em>. The intermediate linear interpolation is calculated as</p>
+<p><span class="math">\(f_{(x,y_1)} = \dfrac{x_2 - x}{x_2 - x_1} f_{(x_1,y_1)} + \dfrac{x - x_1}{x_2 - x_1} f_{(x_2,y_1)}\)</span>,</p>
+<p><span class="math">\(f_{(x,y_2)} = \dfrac{x_2 - x}{x_2 - x_1} f_{(x_1,y_2)} + \dfrac{x - x_1}{x_2 - x_1} f_{(x_2,y_2)}\)</span>.</p>
+<p>The final value would then be</p>
+<p><span class="math">\(f(x,y) = \dfrac{y_2 - y}{y_2 - y_1} f_{(x,y_1)} + \dfrac{y - y_1}{y_2 - y_1} f_{(x,y_2)}\)</span>.</p>
 <h2 id="output-creation"><a href="#output-creation">Output creation</a></h2>
 <p>The image below shows the actual output rendered by the application, there is no video source (solid white background). Resolution was reduced to 320x240 to make the image small, this caused some aliasing artifacts normally not visible. In the top left corner is the current speed over ground as reported by the satellite navigation, while in the top right corner is the current altitude above mean sea level. Speed is displayed in kilometers per hour and the altitude in meters. In the top center is the current waypoint name and distance in kilometers, if provided by the NMEA 0183 navigation data sentence (RMB). There is a heading ruler in the bottom, it is scaled by camera field of view and oriented to current heading. Course to any visible object may be deducted directly from the ruler. There are two markers, the arrow marker point to current track angle as reported by the satellite navigation. The circle marker is the course to current waypoint if any. The dashed horizontal line in the center of the image is the horizon line, it follows the horizon as calculated by inertial subsystem by moving up or down and rotating around its center. Orientation is determined by the marginal markers, they points always to the ground. If the horizon is not visible, dashed arrow is shown instead pointing up or down to where the horizon is hidden.</p>
 <div class="figure">
@@ -876,11 +1046,11 @@ dcm[<span class="dv">8</span>] = dcm[<span class="dv">2</span>] * phi[<span clas
 <div class="figure">
 <img src="images/hardware.svg" alt="Proposed hardware" /><p class="caption">Proposed hardware</p>
 </div>
-<p>The diagram above specifies the proposed platform realization. The <a href="http://www.ti.com/product/omap4460">OMAP4460</a> <span class="citation">[14]</span> application processor was chosen for the project, it features two ARM Cortex-A9 general-purpose CPUs and many specialized subsystems and peripherals. Internal image co-processor allows direct connection of image sensor via its serial interface, for example the <a href="http://www.ovt.com/products/sensor.php?id=93">OV5640</a>. For graphic acceleration, there is the SGX540 GPU, HDMI v1.3 video output is available. The <a href="http://www.invensense.com/mems/gyro/mpu9150.html">MPU-9150</a> <span class="citation">[15]</span> is a motion tracking device composed of MPU-6050 3-axis gyroscope and accelerometer and AK8975 3-axis digital compass. It comes with a I<sup>2</sup>C interface. TWL6032 is the power companion chip designed specifically for the OMAP platform, handling power path switching, and DC-DC voltage conversion. It can manage Li-ion battery as well as charging with extern power adapter or USB line. RS-232 connection is needed for external satellite navigation system as defined in NMEA 0183 specification, it should be connected to the UART via voltage level converter such as MAX232. USB device port allows connection to the external host, providing extra power source and generic data interface. Ethernet or mass storage gadget may be implemented over the USB device port. The embedded IVA 3 hardware video accelerator in the OMAP4460 is capable of encoding and decoding video streams simultaneously, without any load on the ARM cores, this allows media streaming through the USB port (possibly over IP network). External IP camera may also be connected. Additionally a USB host port may also be implemented for external camera connection.</p>
-<p>There are also many development boards already available for generic testing. The <a href="http://pandaboard.org/">Pandaboard ES</a> <span class="citation">[16]</span> features the OMAP4460 and provides all peripheral interfaces. There is also a low price board the <a href="http://beagleboard.org/products/beaglebone%20black">BeagleBone Black</a> <span class="citation">[17]</span> with a Sitara AM3358, while being much simpler, however most of the features needed are still available. Texas Instruments also distributes the <a href="http://www.ti.com/tool/boostxl-senshub">Sensor Hub BoosterPack</a> <span class="citation">[18]</span> with all needed sensors.</p>
+<p>The diagram above specifies the proposed platform realization. The <a href="http://www.ti.com/product/omap4460">OMAP4460</a> <span class="citation">[16]</span> application processor was chosen for the project, it features two ARM Cortex-A9 general-purpose CPUs and many specialized subsystems and peripherals. Internal image co-processor allows direct connection of image sensor via its serial interface, for example the <a href="http://www.ovt.com/products/sensor.php?id=93">OV5640</a>. For graphic acceleration, there is the SGX540 GPU, HDMI v1.3 video output is available. The <a href="http://www.invensense.com/mems/gyro/mpu9150.html">MPU-9150</a> <span class="citation">[17]</span> is a motion tracking device composed of MPU-6050 3-axis gyroscope and accelerometer and AK8975 3-axis digital compass. It comes with a I<sup>2</sup>C interface. TWL6032 is the power companion chip designed specifically for the OMAP platform, handling power path switching, and DC-DC voltage conversion. It can manage Li-ion battery as well as charging with extern power adapter or USB line. RS-232 connection is needed for external satellite navigation system as defined in NMEA 0183 specification, it should be connected to the UART via voltage level converter such as MAX232. USB device port allows connection to the external host, providing extra power source and generic data interface. Ethernet or mass storage gadget may be implemented over the USB device port. The embedded IVA 3 hardware video accelerator in the OMAP4460 is capable of encoding and decoding video streams simultaneously, without any load on the ARM cores, this allows media streaming through the USB port (possibly over IP network). External IP camera may also be connected. Additionally a USB host port may also be implemented for external camera connection.</p>
+<p>There are also many development boards already available for generic testing. The <a href="http://pandaboard.org/">Pandaboard ES</a> <span class="citation">[18]</span> features the OMAP4460 and provides all peripheral interfaces. There is also a low price board the <a href="http://beagleboard.org/products/beaglebone%20black">BeagleBone Black</a> <span class="citation">[19]</span> with a Sitara AM3358, while being much simpler, however most of the features needed are still available. Texas Instruments also distributes the <a href="http://www.ti.com/tool/boostxl-senshub">Sensor Hub BoosterPack</a> <span class="citation">[20]</span> with all needed sensors.</p>
 <p>Application may also be fully emulated on PC in Linux environment. OpenGL ES 2.0 should run under Mesa3D natively. For video interface, GStreamer may be used together with the <em>v4l2loopback</em> module. Though serial interfaces needs to be emulated manually.</p>
 <h1 id="conclusion"><a href="#conclusion">Conclusion</a></h1>
-<p>Theoretical grounds have been made for the application development. Application has been implemented with sources available at <span class="citation">[19]</span>. The basic functionality has been established, the graphical output works just fine even on less resourceful systems such as Sitara AM3358. Only USB camera has been tested in RGB and YUV formats. The H.264 capability showed promise for both video input and output, however limited to the OMAP4460. The MPU-9150 has been successfully implemented, however the DCM algorithm needs to be specifically adapted to its sensors. The gyroscope has little jitter, low-pass filters seems to fix this, but software filtering should be also implemented. Accelerometer and magnetometer readings were very unstable, averaging ratios over 1:10 needs to be used. Overall, the application proved the concept, leaving space for further enhancements and hardware design.</p>
+<p>Theoretical grounds have been made for the application development. Application has been implemented with sources available at <span class="citation">[21]</span>. The basic functionality has been established, the graphical output works just fine even on less resourceful systems such as Sitara AM3358. Only USB camera has been tested in RGB and YUV formats. The H.264 capability showed promise for both video input and output, however limited to the OMAP4460. The MPU-9150 has been successfully implemented, however the DCM algorithm needs to be specifically adapted to its sensors. The gyroscope has little jitter, low-pass filters seems to fix this, but software filtering should be also implemented. Accelerometer and magnetometer readings were very unstable, averaging ratios over 1:10 needs to be used. Overall, the application proved the concept, leaving space for further enhancements and hardware design.</p>
 <h1 id="threads-example"><a href="#threads-example">Threads example</a></h1>
 <p>In this example two threads share standard input and output, access is restricted by <em>mutex</em> so only one thread may use the shared resource at any time.</p>
 <table class="sourceCode c numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
@@ -1174,14 +1344,16 @@ varying vec2 texCoord;
 <p>[9] MUNSHI, Aaftab, GINSBURG, Dan and SHREINER, Dave. <em>OpenGLES 2.0 programming guide</em>. New York: Addison-Wesley Professional, 2009. ISBN 978-0-321-50279-7. </p>
 <p>[10] JAZAR, Reza N. <em>Theory of applied robotics: kinematics, dynamics, and control</em>. 2nd ed. New York: Springer, 2010. ISBN 978-1-4419-1749-2. </p>
 <p>[11] National Marine Electronics Association. NMEA 0183. [online]. 2008. [Accessed 20 November 2013]. Available from: <a href="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp" title="http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp">http://www.nmea.org/content/nmea_standards/nmea_0183_v_410.asp</a></p>
-<p>[12] NIMA. Department of Defense World Geodetic System 1984. [online]. 1997. [Accessed 20 November 2013]. Available from: <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf" title="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf</a></p>
-<p>[13] WEISSTEIN, Eric W. <em>Spherical trigonometry</em> [online]. MathWorld. [Accessed 20 November 2013]. Available from: <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html" title="http://mathworld.wolfram.com/SphericalTrigonometry.html">http://mathworld.wolfram.com/SphericalTrigonometry.html</a></p>
-<p>[14] Texas Instruments. OMAP 4460 Multimedia Device. [online]. 2012. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/product/omap4460" title="http://www.ti.com/product/omap4460">http://www.ti.com/product/omap4460</a></p>
-<p>[15] InvenSense. MPU-9150 Nine-axis MEMS MotionTracking™ Device. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.invensense.com/mems/gyro/mpu9150.html" title="http://www.invensense.com/mems/gyro/mpu9150.html">http://www.invensense.com/mems/gyro/mpu9150.html</a></p>
-<p>[16] pandaboard.org. Pandaboard. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://pandaboard.org/content/resources/references" title="http://pandaboard.org/content/resources/references">http://pandaboard.org/content/resources/references</a></p>
-<p>[17] beagleboard.org. BeagleBone Black. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://beagleboard.org/products/beaglebone%20black" title="http://beagleboard.org/products/beaglebone%20black">http://beagleboard.org/products/beaglebone%20black</a></p>
-<p>[18] Texas Instruments. Sensor Hub BoosterPack. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/tool/boostxl-senshub" title="http://www.ti.com/tool/boostxl-senshub">http://www.ti.com/tool/boostxl-senshub</a></p>
-<p>[19] JAROS, Martin. <em>Augmented reality navigation</em> [online]. [Accessed 13 December 2013]. Available from: <a href="https://github.com/martinjaros/augmented-reality-navigation" title="https://github.com/martinjaros/augmented-reality-navigation">https://github.com/martinjaros/augmented-reality-navigation</a></p>
+<p>[12] Garmin International. Garmin Proprietary NMEA 0183 Sentences. [online]. Available from: <a href="https://www8.garmin.com/support/pdf/NMEA_0183.pdf" title="https://www8.garmin.com/support/pdf/NMEA_0183.pdf">https://www8.garmin.com/support/pdf/NMEA_0183.pdf</a></p>
+<p>[13] NIMA. Department of Defense World Geodetic System 1984. [online]. 1997. [Accessed 20 November 2013]. Available from: <a href="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf" title="http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf">http://earth-info.nga.mil/GandG/publications/tr8350.2/wgs84fin.pdf</a></p>
+<p>[14] WEISSTEIN, Eric W. <em>Spherical trigonometry</em> [online]. MathWorld. [Accessed 20 November 2013]. Available from: <a href="http://mathworld.wolfram.com/SphericalTrigonometry.html" title="http://mathworld.wolfram.com/SphericalTrigonometry.html">http://mathworld.wolfram.com/SphericalTrigonometry.html</a></p>
+<p>[15] MAHAMMAD, Sazid Sk. and R., Ramakrishnan. GeoTIFF - a Standard Image File Format for GIS Applications. [online]. [Accessed 14 April 2014]. Available from: <a href="http://www.gisdevelopment.net/technology/ip/mi03117pf.htm" title="http://www.gisdevelopment.net/technology/ip/mi03117pf.htm">http://www.gisdevelopment.net/technology/ip/mi03117pf.htm</a></p>
+<p>[16] Texas Instruments. OMAP 4460 Multimedia Device. [online]. 2012. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/product/omap4460" title="http://www.ti.com/product/omap4460">http://www.ti.com/product/omap4460</a></p>
+<p>[17] InvenSense. MPU-9150 Nine-axis MEMS MotionTracking™ Device. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.invensense.com/mems/gyro/mpu9150.html" title="http://www.invensense.com/mems/gyro/mpu9150.html">http://www.invensense.com/mems/gyro/mpu9150.html</a></p>
+<p>[18] pandaboard.org. Pandaboard. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://pandaboard.org/content/resources/references" title="http://pandaboard.org/content/resources/references">http://pandaboard.org/content/resources/references</a></p>
+<p>[19] beagleboard.org. BeagleBone Black. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://beagleboard.org/products/beaglebone%20black" title="http://beagleboard.org/products/beaglebone%20black">http://beagleboard.org/products/beaglebone%20black</a></p>
+<p>[20] Texas Instruments. Sensor Hub BoosterPack. [online]. 2013. [Accessed 20 November 2013]. Available from: <a href="http://www.ti.com/tool/boostxl-senshub" title="http://www.ti.com/tool/boostxl-senshub">http://www.ti.com/tool/boostxl-senshub</a></p>
+<p>[21] JAROS, Martin. <em>Augmented reality navigation</em> [online]. [Accessed 13 December 2013]. Available from: <a href="https://github.com/martinjaros/augmented-reality-navigation" title="https://github.com/martinjaros/augmented-reality-navigation">https://github.com/martinjaros/augmented-reality-navigation</a></p>
 </div>
 </body>
 </html>

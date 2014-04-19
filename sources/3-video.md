@@ -9,8 +9,51 @@ V4L2 is the latest revision and is the most widespread video interface throughou
 drives are available from most hardware manufactures and usually mainlined or available as patches.
 The [Linux Media Infrastructure API][v4l2api] [@LinuxTV] is a well documented interface shared by all devices.
 It provides abstraction layer for various device implementations,
-separating the platform details from the applications. Each video device has its device file
-and is controlled via *ioctl* calls. For streaming, standard I/O functions are supported,
+separating the platform details from the applications.
+Individual devices are implemented in their specific drivers.
+These usually exports some configuration options, controllable with the `uvcdynctrl` utility tool.
+To list available video devices use
+
+`uvcdynctrl -l`{.bash}
+
+To list available frame formats supported by the device use
+
+`uvcdynctrl -d DEVICE_NAME -fv`{.bash}
+
+where `DEVICE_NAME` is the name returned by previous command.
+To list available controls exported by the driver use
+
+`uvcdynctrl -d DEVICE_NAME -cv`{.bash}
+
+To read value of the specific control use
+
+`uvcdynctrl -d DEVICE_NAME -g "CONTROL_NAME"`{.bash}
+
+To change the value of the control use
+
+`uvcdynctrl -d DEVICE_NAME -s "CONTROL_NAME" -- VALUE`{.bash}
+
+Typical list of controls include
+
+ * `"Brightness"`
+ * `"Contrast"`
+ * `"Saturation"`
+ * `"Hue"`
+ * `"Gamma"`
+ * `"White Balance Temperature, Auto"`
+ * `"White Balance Temperature"`
+ * `"Backlight Compensation"`
+ * `"Sharpness"`
+ * `"Exposure, Auto"`
+ * `"Exposure (Absolute)"`
+ * `"Focus, Auto"`
+ * `"Focus (absolute)"`
+
+Auto focus usually gives poor quality for outdoor usage so infinite absolute focus should be set.
+The sharpness refers to a proprietary image enhancement algorithms which may sometimes give over-enhanced feeling of the image.
+
+Each video device has its device file and is controlled via *ioctl* calls.
+For streaming, standard I/O functions are supported,
 but the memory mapping is preferred, this allows passing only pointers between the application and the kernel,
 instead of unnecessary copying the data around.
 Available *ioctl* calls are:

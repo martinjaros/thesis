@@ -107,7 +107,7 @@ The **RMB** sentence has following fields:
 The **WPL** sentence has following fields:
 
  * 1-2 fields are waypoint coordinates with the same formatting as in the GGA sentence
- * 3rd field is a string describing the waypoint name
+ * 3rd field is a waypoint identifier string
 
 Many navigation systems use proprietary sentences, they begin with the *P* prefix.
 For example some Garmin products specific sentences [@Garmin] are listed in the following table.
@@ -126,6 +126,19 @@ Table: Garmin proprietary sentences
 Sending data to the device is also possible, there are two useful sentences.
 The PGRMC sentence configures the device including the baud-rate,
 the PGRMO sentence enables / disables specific sentences.
+This is important as the data rate must fit available bandwidth and therefore limiting the sentence interval.
+Typical default baudrate is only 4800, the table bellow shows approximate data rates when the baudrate is increased.
+
+ Baudrate Sentences enabled                  Max length  Records per second
+--------- --------------------------------- ----------- -------------------
+     4800 GPGGA, GPRMB, GPRMC                       180                   2
+     4800 PGRME, PGRMF, PGRMT                       167                   2
+     4800 GPGSA, GPGSV, GPGGA, GPRMB, GPRMC         310                   1
+     9600 GPGSA, GPGSV, GPGGA, GPRMB, GPRMC         310                   3
+     9600 PGRME, PGRMF, PGRMT                       167                   5
+    19200 GPGSA, GPGSV, GPGGA, GPRMB, GPRMC         310                   6
+
+Table: NMEA 0183 data throughput
 
 ### Navigation
 
