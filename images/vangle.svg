@@ -24,9 +24,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.313708"
-     inkscape:cx="77.163094"
-     inkscape:cy="121.63234"
+     inkscape:zoom="3.9999998"
+     inkscape:cx="135.4693"
+     inkscape:cy="73.300828"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -66,7 +66,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -93,18 +93,21 @@
        id="path5504"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
-    <flowRoot
+    <text
        xml:space="preserve"
-       id="flowRoot7218"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
-       transform="translate(-119.15625,500.42592)"><flowRegion
-         id="flowRegion7220"><rect
-           id="rect7222"
-           width="101.11627"
-           height="26.162951"
-           x="278.60007"
-           y="316.97113" /></flowRegion><flowPara
-         id="flowPara7224">Earth surface</flowPara></flowRoot>    <text
+       x="209.81201"
+       y="831.09021"
+       id="text3024"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="209.81201"
+         y="831.09021"
+         id="tspan3026"><tspan
+           x="209.81201"
+           y="831.09021"
+           id="tspan3028">Earth surface</tspan></tspan></text>
+    <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
        x="140"
@@ -237,5 +240,22 @@
          id="tspan7352"
          x="66.41748"
          y="933.00232">90°</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       d="M 228.47754 307.82947 C 228.43907 307.39145 228.41943 306.94802 228.41943 306.5 C 228.41943 299.6196 233.0519 293.82117 239.36801 292.05353 "
+       id="path3017"
+       transform="translate(1.5805664,715.86216)" />
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Monospace;-inkscape-font-specification:Monospace"
+       x="223.83058"
+       y="1010.8622"
+       id="text3854"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3858"
+         x="223.83058"
+         y="1010.8622"
+         style="font-size:10px">Φ</tspan></text>
   </g>
 </svg>

@@ -7,4 +7,7 @@
 [dcmthreads]:      images/dcmthreads.pdf
 [hangle]:          images/hangle.pdf
 [vangle]:          images/vangle.pdf
+[uart]:            images/uart.pdf
+[csi]:             images/csi.pdf
+[i2c]:             images/i2c.pdf
 [output]:          images/output.png
