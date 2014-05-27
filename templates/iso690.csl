@@ -232,7 +232,7 @@
     <choose>
       <if variable="URL">
         <group prefix=" [" suffix="]">
-          <text term="accessed" text-case="capitalize-first"/>
+          <text term="cited"/>
           <date variable="accessed">
             <date-part name="day" prefix="&#160;"/>
             <date-part name="month" prefix="&#160;"/>

@@ -127,6 +127,9 @@ Sending data to the device is also possible, there are two useful sentences.
 The PGRMC sentence configures the device including the baud-rate,
 the PGRMO sentence enables / disables specific sentences.
 This is important as the data rate must fit available bandwidth and therefore limiting the sentence interval.
+
+\clearpage
+
 Typical default baudrate is only 4800, the table bellow shows approximate data rates when the baudrate is increased.
 
  Baudrate Sentences enabled                  Max length  Records per second

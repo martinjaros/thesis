@@ -34,7 +34,7 @@ They scale efficiently with the amount of data needed to be processed due to par
 however they have problems with nonlinear code with branches.
 While CPUs have long pipelines for branch optimizations, GPUs cannot employ those,
 any branch in their code will be extremely inefficient and should be avoided.
-[Graphics (2.3)](#graphics-subsystem) chapter focuses on this area.
+[Chapter 2.3](#graphics-subsystem) focuses on this area.
 There are also available specialized subsystems designed and optimized for a single purpose.
 For example video accelerators, capable of video encoding and decoding, image capture systems or peripheral drivers.
 They will be mentioned in specific chapters.
@@ -52,7 +52,7 @@ Linux kernel is highly portable and configurable, although it does restrict appl
 as all hardware dependent modules which requires full control over the hardware are part of the kernel itself, application does not need to run in real-time at all.
 Other advantages are free, open and well documented sources, highly standardized and POSIX compliant application interface, large amount of drivers with good manufacturer support.
 While its disadvantages are very large code base and steep learning curve, which may slow the initial development.
-Nevertheless Linux kernel has been chosen for the project, more details about its interfaces are in the [Linux kernel (2.1)](#linux-kernel) chapter.
+Nevertheless Linux kernel has been chosen for the project, more details about its interfaces are in the [chapter 2.1](#linux-kernel).
 While the application is designed to be highly portable depending only on the kernel itself,
-several devices has been chosen as the reference, they are listed in the [hardware (3)](#hardware) chapter.
+several devices has been chosen as the reference, they are listed in the [chapter 3](#hardware).
 

@@ -87,7 +87,7 @@ The video capture process is described in the following diagram.
 Source code for simple video capture is in [video capture example](#video-capture-example) appendix.
 The image format is specified using the little-endian four-character code (FOURCC).
 V4L2 defines several formats and provides `v4l2_fourcc()` macro to create a format code from four characters.
-As described later in the [graphics subsystem (2.3)](#graphics-subsystem) chapter, graphics uses natively the RGB4 format.
+As described later in the [graphics subsystem (chapter 2.3)](#graphics-subsystem) chapter, graphics uses natively the RGB4 format.
 This format is defined as a single plane with one sample per pixel and four bytes per sample.
 These bytes represents red, green and blue channel values respectively. Image size is therefore $width \cdot height \cdot 4$ bytes.
 Many image sensors however support YUV color-space, for example the YU12 format.
@@ -129,7 +129,7 @@ It should be noted that not all devices may use the BT.601 recommendation,
 V4L2 refers to it as `V4L2_COLORSPACE_SMPTE170M` in the `VIDIOC_S_FMT` request structure.
 Implementation of the YUV to RGB color-space conversion is most efficient on graphics accelerators,
 such example is included in [colorspace conversion example](#colorspace-conversion-example) appendix.
-It is written in GLSL for fragment processor, see [graphics subsystem (2.3)](#graphics-subsystem) chapter for further description.
+It is written in GLSL for fragment processor, see [graphics subsystem (chapter 2.3)](#graphics-subsystem) chapter for further description.
 
 There is a kernel module `v4l2loopback` which creates a video loop-back device, similar to network loop-back, allowing piping two video applications together.
 This is very useful not only for testing, but also for implementation of intermediate decoders.

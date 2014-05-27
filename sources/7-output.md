@@ -15,6 +15,8 @@ it follows the horizon as calculated by inertial subsystem by moving up or down 
 Orientation is determined by the marginal markers, they points always to the ground.
 If the horizon is not visible, dashed arrow is shown instead pointing up or down to where the horizon is hidden.
 
+\clearpage
+
 ![Visible output][output]
 
 Application accepts database of landmarks, following file was used in this example:
