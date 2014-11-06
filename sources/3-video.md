@@ -52,6 +52,8 @@ Typical list of controls include
 Auto focus usually gives poor quality for outdoor usage so infinite absolute focus should be set.
 The sharpness refers to a proprietary image enhancement algorithms which may sometimes give over-enhanced feeling of the image.
 
+\clearpage
+
 Each video device has its device file and is controlled via *ioctl* calls.
 For streaming, standard I/O functions are supported,
 but the memory mapping is preferred, this allows passing only pointers between the application and the kernel,

@@ -40,8 +40,6 @@ EGL library is used for initialization of the OpenGL context, following function
 
 Table: EGL function for OpenGL ES initialization
 
-\clearpage
-
 Graphical pipeline is described in the diagram below.
 The pipeline is programmable, the program runs on the GPU,
 while OpenGL API is used for communication with the application running on CPU.
@@ -103,8 +101,6 @@ they are interpolated between verticies during the rasterization.
 Fragment shaders may use textures to to calculate fragment color,
 textures are stored in the GPU memory and loaded by the application.
 
-\clearpage
-
 Following functions are available in the API:
 
 **Function**                **Description**
@@ -146,8 +142,6 @@ void main()
   texcoord = vertex.zw;
 }
 ```
-
-\clearpage
 
 and the fragment shader:
 ```{.c}

@@ -1,3 +1,5 @@
+\clearpage
+
 # Application
 
 Application is divided into four subsystems, each being standalone component.

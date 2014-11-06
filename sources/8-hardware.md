@@ -1,11 +1,13 @@
-# Hardware
+\clearpage
 
-![Proposed hardware solution][hardware]
+# Hardware
 
 The diagram above specifies the proposed platform realization.
 The Texas Instruments OMAP4460 [@OMAP4460] application processor was chosen for the project,
 however the portable nature of the application does not make this a requirement.
 For example the AM335x family of processors was tested and works as well.
+
+![Proposed hardware solution][hardware]
 
 To provide flexible power supply a specialized chip such as the TWL6032 power companion for the OMAP platform should be used to
 

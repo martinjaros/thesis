@@ -1,3 +1,5 @@
+\clearpage
+
 # Conclusion
 
 The application has been implemented with its source code available under the GPL license at [@ARNav].
@@ -11,6 +13,8 @@ Complex filtering algorithm provides stable attitude necessary to avoid screen j
 No sophisticated user interface was implemented as the application can share most data (waypoints, enroute navigation) with the existing systems via its serial connection
 and those systems already have complex user interfaces. This means the waypoint management is centralized and not duplicated by the application.
 The final device is deployable into an augmented flight navigation system.
+
+\clearpage
 
 # References
 

@@ -1,3 +1,5 @@
+\clearpage
+
 # Augmented reality
 
 ## Project overview

@@ -2,6 +2,8 @@
 % Martin Jaroš
 % 2014
 
+\clearpage
+
 # Preface
 
 Augmented reality technologies have been around for a while [@Bimber2005],
