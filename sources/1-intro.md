@@ -46,8 +46,8 @@ between application and the hardware. However, to provide enough abstraction som
 Operating systems may be real-time, giving applications full control, behaving just like large libraries.
 This is favorable approach in embedded systems as it allows precise timings.
 There are many such systems specially tailored for embedded applications like
-[FreeRTOS][freertos] [@FreeRTOS] or proprietary [VxWorks][vxworks] [@VxWorks]. On the other hand, as recent processors improved greatly in power,
-efficiency and capabilities, it is possible and quite feasible to run a full featured system like [Linux][linux] or proprietary [Windows CE][wince] [@WinCE].
+FreeRTOS [@FreeRTOS] or proprietary VxWorks [@VxWorks]. On the other hand, as recent processors improved greatly in power,
+efficiency and capabilities, it is possible and quite feasible to run a full featured system like Linux or proprietary Windows CE [@WinCE].
 Linux kernel is highly portable and configurable, although it does restrict applications from real-time use (Linux RT patches also exist for real-time applications),
 as all hardware dependent modules which requires full control over the hardware are part of the kernel itself, application does not need to run in real-time at all.
 Other advantages are free, open and well documented sources, highly standardized and POSIX compliant application interface, large amount of drivers with good manufacturer support.

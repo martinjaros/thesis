@@ -1,8 +1,8 @@
 % Augmented reality navigation
 % Martin Jaroš
-% Dec. 2013
+% 2014
 
-# Preface {.unnumbered}
+# Preface
 
 Augmented reality technologies have been around for a while [@Bimber2005],
 however their implementation in embedded systems were not possible until recently.

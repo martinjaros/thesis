@@ -20,7 +20,7 @@ Individual displays (HDMI, LCD) are also configured by this interface.
 
 ### OpenGL ES 2.0 API
 There is a standardized library for interfacing with graphical accelerators maintained by Khronos group
-called OpenGL. Its recent version targeted for embedded systems is [OpenGL ES 2.0][opengles] [@OpenGLES2] [@OpenGLES2book],
+called OpenGL [@OpenGLES2book]. Its recent version targeted for embedded systems is OpenGL ES 2.0 [@OpenGLES2],
 implemented by majority of hardware developers. It is also supported by the multi-platform Mesa3D library,
 so it will run also on desktop computer, either emulated by CPU or partially accelerated depending on available hardware.
 OpenGL ES 2.0 is implemented in two parts, the kernel module and user-space libraries *EGL* and *GLESv2*.
@@ -203,7 +203,7 @@ The best method to achieve this is to create glyph atlas texture with all glyphs
 and then generate strings as VBOs with proper texture coordinates for each character.
 To utilize unicode support, this atlas needs to be appended by newly requested characters in real-time
 as there are too many glyphs to be pre-rasterized.
-The [FreeType2][freetype] library can rasterize glyphs from the TrueType font file on the fly.
+The FreeType2 library can rasterize glyphs from the TrueType font file on the fly.
 These glyphs are in fact alpha maps to be processed by the fragment shader:
 
 `gl_FragColor = color * texture2D(texture, texcoord).a;`{.c}

@@ -23,8 +23,6 @@ Application is designed to be modular and highly configurable.
 All constants used throughout the implementation are defined with a default value and modifiable through the configuration file.
 This includes for example video setup, device selection or rendering parameters.
 
-\clearpage
-
 ## Linux kernel
 
 Programs running in Linux are divided into two groups, kernel-space and user-space.
@@ -69,16 +67,16 @@ Linux kernel has monolithic structure, so all device drivers resides in the kern
 From application point of view, this means that all peripheral access must be done
 through the standard library and Virtual File System.
 Individual devices are accessible as device files defined by major and minor number typically located at `/dev`.
-These files could be created automatically by kernel (`devtmpfs` file-system), by daemon ([`udev(8)`][udev])),
-or manually by [`mknod(1)`][mknod].
+These files could be created automatically by kernel (`devtmpfs` file-system), by daemon (`udev(8)`),
+or manually by `mknod(1)`.
 Complete kernel device model is exported as `sysfs` file-system and typically mounted at `/sys`.
 
 **Function name**                       **Access type**  **Typical usage**
 --------------------------------------- ---------------- ------------------
-[`select()`][select], [`poll()`][poll]  event            Synchronization, multiplexing, event handling
-[`ioctl()`][ioctl]                      structure        Configuration, register access
-[`read()`][read], [`write()`][write]    stream           Raw data buffers, byte streams
-[`mmap()`][mmap]                        block            High throughput data transfers
+`select()`, `poll()`                    event            Synchronization, multiplexing, event handling
+`ioctl()`                               structure        Configuration, register access
+`read()`, `write()`                     stream           Raw data buffers, byte streams
+`mmap()`                                block            High throughput data transfers
 
 Table: Available functions for working with device file descriptors
 
@@ -87,7 +85,7 @@ First, to tell kernel there is such a device, the `sysfs` file-system may be use
 
 `echo $DEVICE_NAME $DEVICE_ADDRESS > /sys/bus/i2c/devices/i2c-1/new_device`{.bash}
 
-This should create a special file in `/dev`, which should be opened by [`open()`][open] to get a file descriptor for this device.
+This should create a special file in `/dev`, which should be opened by `open()` to get a file descriptor for this device.
 Device driver may export some *ioctl* requests, each request is defined by a number and a structure passed between the application and the kernel.
 Driver should define requests for controlling the device, maybe accessing its internal registers and configuring a data stream.
 Each request is called by

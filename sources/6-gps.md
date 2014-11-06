@@ -9,7 +9,7 @@ It handles serial lines, converters and virtual lines with devices generally cal
 Serial connections (UART, RS-232) are usually named `/dev/ttySn`, where `n` is a device number.
 Emulated connection are named `/dev/ttyUSBn` for USB emulators or `/dev/ttyACMn` for modem emulators.
 There are also pseudo terminals in `/dev/pts/` used for software emulation.
-This devices allows standard I/O and may be controlled with functions defined in `termios.h` or by using [stty(1)][stty] utility.
+This devices allows standard I/O and may be controlled with functions defined in `termios.h` or by using stty(1) utility.
 Important physical interface settings are
 
 * baud rate
@@ -33,7 +33,7 @@ This is how standard console line works, however if application needs to be in f
 driver may be switched to raw mode with per-character buffers and echo disabled.
 Also specific control characters for canonical mode may be configured.
 
-GPS receivers uses [NMEA 183 standard][nmea0183] [@NMEA0183]. Communication is done in sentences,
+GPS receivers uses NMEA 183 standard [@NMEA0183]. Communication is done in sentences,
 each message starts with dollar sign followed by source name and sentence type,
 then there is comma separated list of data fields optionally terminated by a checksum.
 Each sentence is appended with carriage return and new line. For example in sentence
@@ -147,7 +147,7 @@ Table: NMEA 0183 data throughput
 
 As Earth shape is very complex, there are two layers of approximation used for computing position.
 Geoid is the equipotential surface, which describes mean ocean level if Earth was fully covered with water.
-Most recent geoid model is EGM96 which is used together with [WGS84 reference ellipsoid][wgs84] [@WGS84].
+Most recent geoid model is EGM96 which is used together with WGS84 reference ellipsoid [@WGS84].
 This ellipsoid has semi-major axis of $a = 6378137$ meters and flattening $f = 1/298.257223563$.
 Note that ellipsoid flattening is defined as
 
@@ -208,7 +208,7 @@ where *FOV* is the field of view, *dev* means device angle (calculated by [inert
 *proj* means projection angle (defined later on in this section).
 Orthodrome (great circle) is the intersection of a sphere and a plane passing though its center.
 However, because Earth flattening is rather small, it may be used as an approximation for a curve following Earth surface,
-connecting two points with shortest route. [Spherical trigonometry][sphtrig] [@SphTrig] defines basis for orthodrome calculations,
+connecting two points with shortest route. Spherical trigonometry [@SphTrig] defines basis for orthodrome calculations,
 shown in the illustration below.
 
 ![Horizontal projection angle][hangle]
@@ -248,7 +248,7 @@ Simplified heading along the line is
 
 $\alpha_{proj} \doteq \arctan \left ( \dfrac{\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0)}{\varphi - \varphi_0} \right )$.
 
-Note that [loxodrome approximation][rhumb] will fail horribly near poles as the curve will run circles around the pole [@MapProjections].
+Note that loxodrome approximation will fail horribly near poles as the curve will run circles around the pole [@MapProjections].
 Angular distance along loxodrome is
 
 $\phi \doteq \sqrt{(\varphi - \varphi_0)^2 + (\lambda \cos(\varphi) - \lambda_0 \cos(\varphi_0))^2}$
@@ -268,9 +268,9 @@ This approximation will fail at higher altitudes when the visibility range is hi
 
 Waypoints are usually defined only by latitude and longitude, as their altitude equals terrain altitude (for example the WPL sentence).
 To determine the terrain topology, elevation map may be used. This is a scalar field usually encapsulated into raster image with meta-data.
-[GeoTIFF][geotiff] [@GeoTIFF] is a standardized format defining georeferencing information within a TIFF file.
-Digital elevation models in this format are available for example at [USGS][usgs] (United States) or [Eurostat][eurostat] (Europe).
-There are several tools for working with this format, for example the [FWTools][fwtools] open source GIS binary kit.
+GeoTIFF [@GeoTIFF] is a standardized format defining georeferencing information within a TIFF file.
+Digital elevation models in this format are available for example at USGS (United States) or Eurostat (Europe).
+There are several tools for working with this format, for example the FWTools open source GIS binary kit.
 To export quantized pixel map from the elevation model, the toolkit comes with the *gdal_translate* utility.
 The following command will generate PNG image of the South Moravian Region of the Czech Republic
 

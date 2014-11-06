@@ -3,7 +3,7 @@
 ![Proposed hardware solution][hardware]
 
 The diagram above specifies the proposed platform realization.
-The Texas Instruments [OMAP4460][omap4460] [@OMAP4460] application processor was chosen for the project,
+The Texas Instruments OMAP4460 [@OMAP4460] application processor was chosen for the project,
 however the portable nature of the application does not make this a requirement.
 For example the AM335x family of processors was tested and works as well.
 
@@ -30,7 +30,7 @@ virtually any device supported by the Linux kernel should work.
 The most straightforward implementation would be direct connection to the camera chip,
 for this purpose there are two CSI-2 interfaces on the OMAP4 platform as a port of the embedded imaging subsystem (ISS).
 
-The [MIPI CSI-2][mipi] [@MIPICSI2] interface is the standard serial camera interface,
+The MIPI CSI-2 [@MIPICSI2] interface is the standard serial camera interface,
 consisting of clock and pixel data differential lines as shown in the diagram below.
 
 ![CSI interface][csi]
@@ -38,7 +38,7 @@ consisting of clock and pixel data differential lines as shown in the diagram be
 The pixel data are transmitted synchronously, there is also usually an I2C control interface.
 The ISS on the OMAP side features an image signal processor capable of auto focus, auto exposure, and auto white balance computations.
 The data throughput of the subsystem scales up to 200 MPix/s.
-There are many supported image sensors such as the Omnivision [OV5640][ov5640], it has 5MP resolution with 1080p RGB output at 30 FPS.
+There are many supported image sensors such as the Omnivision OV5640, it has 5MP resolution with 1080p RGB output at 30 FPS.
 
 External video sources are also supported, they may connect by either USB or Ethernet 
 USB Video Class (UVC) driver is a part of the Linux kernel V4L2 module and works with almost any UVC device, USB devices are self descriptive.
@@ -81,14 +81,14 @@ The communication is simplex and is controlled and clocked by the master, each s
 The I^2^C interface is typically used to directly read or write registers of the interconnected devices,
 each device must have a device driver in the Linux kernel for abstraction.
 
-The Invensense [MPU-9150][mpu9150] [@MPU9150] is an all-in-one motion tracking device composed of an embedded
+The Invensense MPU-9150 [@MPU9150] is an all-in-one motion tracking device composed of an embedded
 MPU-6050 3-axis gyroscope and accelerometer and a AK8975 3-axis digital compass.
 Many other individual devices are supported by the kernel IIO tree, such as Freescale MPL3115 barometer, Invensense ITG-3200 gyroscope or BMA180 accelerometer.
 
 There are many development boards already available for generic testing.
-The [Pandaboard ES][pandaboard] [@Pandaboard] features the OMAP4460 and provides all peripheral interfaces.
-There is also a low price board the [BeagleBone Black][bbb] [@BBBlack] with a Sitara AM3358 processor.
-Texas Instruments also distributes the [Sensor Hub BoosterPack][senshub] [@SensorHub] with all needed sensors.
+The Pandaboard ES [@Pandaboard] features the OMAP4460 and provides all peripheral interfaces.
+There is also a low price board the BeagleBone Black [@BBBlack] with a Sitara AM3358 processor.
+Texas Instruments also distributes the Sensor Hub BoosterPack [@SensorHub] with all needed sensors.
 
 Application may also be fully emulated on the PC in the Linux environment.
 OpenGL ES 2.0 should run natively under Mesa3D library.
